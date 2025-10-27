@@ -1,4 +1,20 @@
 [submodule "lib/forge-std"]
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
-
+[submodule "lib/ve-governance"]
+	path = lib/ve-governance
+	url = https://github.com/aragon/ve-governance
+[submodule "lib/token-voting-plugin"]
+	path = lib/token-voting-plugin
+	url = https://github.com/hats-protocol/token-voting-plugin
+	branch = hats
+[submodule "lib/osx-capital-distributor"]
+	path = lib/osx-capital-distributor
+	url = https://github.com/hats-protocol/osx-capital-distributor
+	branch = direct-allocation-strategy
+[submodule "lib/osx"]
+	path = lib/osx
+	url = https://github.com/aragon/osx
+[submodule "lib/osx-commons"]
+	path = lib/osx-commons
+	url = https://github.com/aragon/osx-commons

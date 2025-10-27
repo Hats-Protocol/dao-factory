@@ -2,18 +2,47 @@
 src = 'src'
 out = 'out'
 libs = ['lib']
-optimizer_runs = 1_000_000
+optimizer_runs = 10_000
 # the following setting ensures that deterministically deployed contracts will always be to the same address
 bytecode_hash = "none"
 gas_reports = []
 auto_detect_solc = false
-solc = "0.8.28"
+solc = "0.8.29"
 remappings = [
   "ds-test/=lib/forge-std/lib/ds-test/src/",
   "forge-std/=lib/forge-std/src/",
+  # Use lib/osx for all OSx framework contracts
+  "@aragon/osx/=lib/osx/packages/contracts/src/",
+  # Use ve-governance's osx-commons for ALL commons imports
+  # Note: pointing to contracts/ not contracts/src/ because imports already include src/
+  "@aragon/osx-commons-contracts/=lib/ve-governance/lib/osx-commons/contracts/",
+  "@aragon/commons/=lib/ve-governance/lib/osx-commons/contracts/",
+  # Other Aragon plugins
+  "@aragon/multisig/=lib/ve-governance/lib/multisig-plugin/packages/contracts/src/",
+  # VE Governance components
+  "@escrow/=lib/ve-governance/src/escrow/",
+  "@curve/=lib/ve-governance/src/curve/",
+  "@queue/=lib/ve-governance/src/queue/",
+  "@clock/=lib/ve-governance/src/clock/",
+  "@lock/=lib/ve-governance/src/lock/",
+  "@delegation/=lib/ve-governance/src/delegation/",
+  "@voting/=lib/ve-governance/src/voting/",
+  "@libs/=lib/ve-governance/src/libs/",
+  "@setup/=lib/ve-governance/src/setup/",
+  # Token Voting Hats
+  "@token-voting-hats/=lib/token-voting-plugin/src/",
+  # Capital Distributor (will use ve-governance's osx-commons via @aragon/commons)
+  "@capital-distributor/=lib/osx-capital-distributor/src/",
+  "@aragon/conditions/=lib/osx-capital-distributor/lib/conditions/src/",
+  # OpenZeppelin
+  "@openzeppelin/contracts/=lib/token-voting-plugin/lib/openzeppelin-contracts/contracts/",
+  "@openzeppelin/contracts-upgradeable/=lib/ve-governance/lib/openzeppelin-contracts-upgradeable/contracts/",
 ]
 # Enable tests to read ir-optimized bytecode precompiled by profile.optimized
-fs_permissions = [{ access = "read", path = "./optimized-out" }]
+fs_permissions = [
+  { access = "read", path = "./optimized-out" },
+  { access = "read", path = "./lib/osx/packages/artifacts/src/addresses.json" }
+]
 
 # for pre-compiling ir-optimized bytecode that will be later deployed by tests
 [profile.optimized]

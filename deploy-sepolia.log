@@ -1,0 +1,26 @@
+Compiling 1 files with Solc 0.8.29
+Solc 0.8.29 finished in 322.45ms
+Error: Compiler run failed:
+Error (7576): Undeclared identifier.
+  --> script/DeployFactory.s.sol:56:40:
+   |
+56 |       _deployFactory(tokenVotingSetup, osxDaoFactory, pluginSetupProcessor, pluginRepoFactory);
+   |                                        ^^^^^^^^^^^^^
+
+Error (7576): Undeclared identifier. Did you mean "PluginSetupProcessor"?
+  --> script/DeployFactory.s.sol:56:55:
+   |
+56 |       _deployFactory(tokenVotingSetup, osxDaoFactory, pluginSetupProcessor, pluginRepoFactory);
+   |                                                       ^^^^^^^^^^^^^^^^^^^^
+
+Error (7576): Undeclared identifier. Did you mean "PluginRepoFactory"?
+  --> script/DeployFactory.s.sol:56:77:
+   |
+56 |       _deployFactory(tokenVotingSetup, osxDaoFactory, pluginSetupProcessor, pluginRepoFactory);
+   |                                                                             ^^^^^^^^^^^^^^^^^
+
+Error (7576): Undeclared identifier.
+  --> script/DeployFactory.s.sol:73:20:
+   |
+73 |     _logDeployment(factory);
+   |                    ^^^^^^^

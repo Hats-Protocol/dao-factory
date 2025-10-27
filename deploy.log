@@ -1,0 +1,50 @@
+Compiling 1 files with Solc 0.8.29
+Solc 0.8.29 finished in 3.98s
+Compiler run successful with warnings:
+Warning (5740): Unreachable code.
+   --> lib/ve-governance/lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:124:9:
+    |
+124 |         _initializing = false;
+    |         ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2072): Unused local variable.
+   --> lib/ve-governance/src/escrow/VotingEscrowIncreasing_v1_2_0.sol:576:9:
+    |
+576 |         IEscrowCurve.TokenPoint memory point = IEscrowCurve(curve).tokenPointHistory(_tokenId, 1);
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Warning (2018): Function state mutability can be restricted to pure
+  --> lib/ve-governance/lib/osx-commons/contracts/src/plugin/setup/PluginSetup.sol:32:5:
+   |
+32 |     function prepareUpdate(
+   |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (2018): Function state mutability can be restricted to pure
+   --> lib/ve-governance/src/queue/DynamicExitQueue.sol:327:5:
+    |
+327 |     function _getScaledTimeBasedFee(
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+Script ran successfully.
+
+== Logs ==
+  === Deploying Plugin Setup Contracts ===
+  Using GovernanceERC20 base: 0xA03C2182af8eC460D498108C92E8638a580b94d4
+  Using GovernanceWrappedERC20 base: 0x6E924eA5864044D8642385683fFA5AD42FB687f2
+  TokenVotingSetupHats: 0x5b73C5498c1E3b4dbA84de0F1833c4a029d90519
+  
+  === Deploying VETokenVotingDaoFactory ===
+  VETokenVotingDaoFactory: 0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496
+  
+  === Deploying DAO ===
+  DAO deployed successfully!
+  
+  === Deployment Artifacts ===
+  DAO: 0xC9f97303be08572389eD355E328d632b80191378
+  TokenVotingHats Plugin: 0xBc153CB38B675caD396cE1871614De68973C789d
+  TokenVotingHats Repo: 0xe4a0dE2301e9c9A305DC5aed0348A3bB50B3e063
+  
+  === VE System Components ===
+  (Call factory.getDeployment() to retrieve all VE system addresses)
+Error: `Unknown1` is above the contract size limit (112812 > 24576).
+Error: IO error: not a terminal

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/spencer/Workspaces/**)",
+      "Bash(cd:*)",
+      "Bash(git ls-remote:*)",
+      "Bash(cat:*)",
+      "Bash(forge build:*)",
+      "Bash(sort:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
