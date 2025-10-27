@@ -13,6 +13,7 @@ import { LockV1_2_0 as Lock } from "@lock/Lock_v1_2_0.sol";
 import { LinearIncreasingCurve as Curve } from "@curve/LinearIncreasingCurve.sol";
 import { DynamicExitQueue as ExitQueue } from "@queue/DynamicExitQueue.sol";
 import { EscrowIVotesAdapter } from "@delegation/EscrowIVotesAdapter.sol";
+import { AddressGaugeVoter } from "@voting/AddressGaugeVoter.sol";
 
 /// @notice Parameters for VE system deployment
 /// @param underlyingToken The ERC20 token to lock in the VotingEscrow
@@ -55,6 +56,7 @@ contract VESystemSetup is PluginSetup {
   address public immutable queueBase;
   address public immutable nftBase;
   address public immutable ivotesAdapterBase;
+  address public immutable voterBase;
 
   /// @notice Initializes VESystemSetup with pre-deployed base implementation contracts
   /// @param _clockBase Address of deployed Clock implementation
@@ -63,13 +65,15 @@ contract VESystemSetup is PluginSetup {
   /// @param _queueBase Address of deployed ExitQueue implementation
   /// @param _nftBase Address of deployed Lock implementation
   /// @param _ivotesAdapterBase Address of deployed IVotesAdapter implementation (with specific curve params)
+  /// @param _voterBase Address of deployed AddressGaugeVoter implementation
   constructor(
     address _clockBase,
     address _escrowBase,
     address _curveBase,
     address _queueBase,
     address _nftBase,
-    address _ivotesAdapterBase
+    address _ivotesAdapterBase,
+    address _voterBase
   ) PluginSetup(_escrowBase) {
     clockBase = _clockBase;
     escrowBase = _escrowBase;
@@ -77,6 +81,7 @@ contract VESystemSetup is PluginSetup {
     queueBase = _queueBase;
     nftBase = _nftBase;
     ivotesAdapterBase = _ivotesAdapterBase;
+    voterBase = _voterBase;
   }
 
   /// @notice Prepares the installation of a VE system
@@ -89,51 +94,38 @@ contract VESystemSetup is PluginSetup {
     returns (address plugin, PreparedSetupData memory preparedSetupData)
   {
     VESystemSetupParams memory params = abi.decode(_data, (VESystemSetupParams));
+    address dao = address(_dao);
 
     // Deploy all VE components as proxies
-    address clockProxy;
-    address escrowProxy;
-    address curveProxy;
-    address queueProxy;
-    address nftProxy;
-    address adapterProxy;
+    address clockProxy = clockBase.deployUUPSProxy(abi.encodeCall(Clock.initialize, (dao)));
 
-    {
-      clockProxy = clockBase.deployUUPSProxy(abi.encodeCall(Clock.initialize, (address(_dao))));
-    }
+    address escrowProxy = escrowBase.deployUUPSProxy(
+      abi.encodeCall(VotingEscrow.initialize, (params.underlyingToken, dao, clockProxy, params.minDeposit))
+    );
 
-    {
-      escrowProxy = escrowBase.deployUUPSProxy(
-        abi.encodeCall(VotingEscrow.initialize, (params.underlyingToken, address(_dao), clockProxy, params.minDeposit))
-      );
-    }
+    address curveProxy = curveBase.deployUUPSProxy(abi.encodeCall(Curve.initialize, (escrowProxy, dao, clockProxy)));
 
-    {
-      // Use pre-deployed Curve base (already has curve parameters baked in)
-      curveProxy = curveBase.deployUUPSProxy(abi.encodeCall(Curve.initialize, (escrowProxy, address(_dao), clockProxy)));
-    }
+    address queueProxy = queueBase.deployUUPSProxy(
+      abi.encodeCall(
+        ExitQueue.initialize,
+        (escrowProxy, params.cooldownPeriod, dao, params.feePercent, clockProxy, params.minLockDuration)
+      )
+    );
 
-    {
-      queueProxy = queueBase.deployUUPSProxy(
-        abi.encodeCall(
-          ExitQueue.initialize,
-          (escrowProxy, params.cooldownPeriod, address(_dao), params.feePercent, clockProxy, params.minLockDuration)
-        )
-      );
-    }
+    address nftProxy = nftBase.deployUUPSProxy(
+      abi.encodeCall(Lock.initialize, (escrowProxy, params.veTokenName, params.veTokenSymbol, dao))
+    );
 
-    {
-      nftProxy = nftBase.deployUUPSProxy(
-        abi.encodeCall(Lock.initialize, (escrowProxy, params.veTokenName, params.veTokenSymbol, address(_dao)))
-      );
-    }
+    address adapterProxy = ivotesAdapterBase.deployUUPSProxy(
+      abi.encodeCall(EscrowIVotesAdapter.initialize, (dao, escrowProxy, clockProxy, false))
+    );
 
-    {
-      // Use pre-deployed IVotesAdapter base (already has curve parameters baked in)
-      adapterProxy = ivotesAdapterBase.deployUUPSProxy(
-        abi.encodeCall(EscrowIVotesAdapter.initialize, (address(_dao), escrowProxy, clockProxy, false))
-      );
-    }
+    address voterProxy = voterBase.deployUUPSProxy(
+      abi.encodeCall(
+        AddressGaugeVoter.initialize,
+        (dao, escrowProxy, false, clockProxy, adapterProxy, true)
+      )
+    );
 
     // NOTE: Components are NOT wired together here - the factory will do that
     // after granting itself the necessary permissions
@@ -142,21 +134,22 @@ contract VESystemSetup is PluginSetup {
     plugin = escrowProxy;
 
     // Return all components as helpers (factory will need them for permissions)
-    address[] memory helpers = new address[](5);
+    address[] memory helpers = new address[](6);
     helpers[0] = clockProxy; // index 0: Clock
     helpers[1] = curveProxy; // index 1: Curve
     helpers[2] = queueProxy; // index 2: ExitQueue
     helpers[3] = nftProxy; // index 3: Lock
     helpers[4] = adapterProxy; // index 4: IVotesAdapter
+    helpers[5] = voterProxy; // index 5: AddressGaugeVoter
 
     // Define permissions that need to be granted
-    PermissionLib.MultiTargetPermission[] memory permissions = new PermissionLib.MultiTargetPermission[](13);
+    PermissionLib.MultiTargetPermission[] memory permissions = new PermissionLib.MultiTargetPermission[](15);
 
     // VotingEscrow permissions (plugin is escrow)
     permissions[0] = PermissionLib.MultiTargetPermission({
       operation: PermissionLib.Operation.Grant,
       where: plugin,
-      who: _dao,
+      who: dao,
       condition: PermissionLib.NO_CONDITION,
       permissionId: VotingEscrow(plugin).ESCROW_ADMIN_ROLE()
     });
@@ -164,7 +157,7 @@ contract VESystemSetup is PluginSetup {
     permissions[1] = PermissionLib.MultiTargetPermission({
       operation: PermissionLib.Operation.Grant,
       where: plugin,
-      who: _dao,
+      who: dao,
       condition: PermissionLib.NO_CONDITION,
       permissionId: VotingEscrow(plugin).PAUSER_ROLE()
     });
@@ -172,7 +165,7 @@ contract VESystemSetup is PluginSetup {
     permissions[2] = PermissionLib.MultiTargetPermission({
       operation: PermissionLib.Operation.Grant,
       where: plugin,
-      who: _dao,
+      who: dao,
       condition: PermissionLib.NO_CONDITION,
       permissionId: VotingEscrow(plugin).SWEEPER_ROLE()
     });
@@ -181,7 +174,7 @@ contract VESystemSetup is PluginSetup {
     permissions[3] = PermissionLib.MultiTargetPermission({
       operation: PermissionLib.Operation.Grant,
       where: curveProxy,
-      who: _dao,
+      who: dao,
       condition: PermissionLib.NO_CONDITION,
       permissionId: Curve(curveProxy).CURVE_ADMIN_ROLE()
     });
@@ -190,7 +183,7 @@ contract VESystemSetup is PluginSetup {
     permissions[4] = PermissionLib.MultiTargetPermission({
       operation: PermissionLib.Operation.Grant,
       where: queueProxy,
-      who: _dao,
+      who: dao,
       condition: PermissionLib.NO_CONDITION,
       permissionId: ExitQueue(queueProxy).QUEUE_ADMIN_ROLE()
     });
@@ -198,7 +191,7 @@ contract VESystemSetup is PluginSetup {
     permissions[5] = PermissionLib.MultiTargetPermission({
       operation: PermissionLib.Operation.Grant,
       where: queueProxy,
-      who: _dao,
+      who: dao,
       condition: PermissionLib.NO_CONDITION,
       permissionId: ExitQueue(queueProxy).WITHDRAW_ROLE()
     });
@@ -207,7 +200,7 @@ contract VESystemSetup is PluginSetup {
     permissions[6] = PermissionLib.MultiTargetPermission({
       operation: PermissionLib.Operation.Grant,
       where: nftProxy,
-      who: _dao,
+      who: dao,
       condition: PermissionLib.NO_CONDITION,
       permissionId: Lock(nftProxy).LOCK_ADMIN_ROLE()
     });
@@ -216,7 +209,7 @@ contract VESystemSetup is PluginSetup {
     permissions[7] = PermissionLib.MultiTargetPermission({
       operation: PermissionLib.Operation.Grant,
       where: adapterProxy,
-      who: _dao,
+      who: dao,
       condition: PermissionLib.NO_CONDITION,
       permissionId: EscrowIVotesAdapter(adapterProxy).DELEGATION_ADMIN_ROLE()
     });
@@ -224,7 +217,7 @@ contract VESystemSetup is PluginSetup {
     permissions[8] = PermissionLib.MultiTargetPermission({
       operation: PermissionLib.Operation.Grant,
       where: adapterProxy,
-      who: _dao,
+      who: dao,
       condition: PermissionLib.NO_CONDITION,
       permissionId: EscrowIVotesAdapter(adapterProxy).DELEGATION_TOKEN_ROLE()
     });
@@ -262,6 +255,23 @@ contract VESystemSetup is PluginSetup {
       permissionId: EscrowIVotesAdapter(adapterProxy).DELEGATION_TOKEN_ROLE()
     });
 
+    // AddressGaugeVoter permissions
+    permissions[13] = PermissionLib.MultiTargetPermission({
+      operation: PermissionLib.Operation.Grant,
+      where: voterProxy,
+      who: dao,
+      condition: PermissionLib.NO_CONDITION,
+      permissionId: AddressGaugeVoter(voterProxy).GAUGE_ADMIN_ROLE()
+    });
+
+    permissions[14] = PermissionLib.MultiTargetPermission({
+      operation: PermissionLib.Operation.Grant,
+      where: voterProxy,
+      who: dao,
+      condition: PermissionLib.NO_CONDITION,
+      permissionId: keccak256("EXECUTE_PERMISSION")
+    });
+
     preparedSetupData = PreparedSetupData({ helpers: helpers, permissions: permissions });
   }
 
@@ -274,7 +284,7 @@ contract VESystemSetup is PluginSetup {
     view
     returns (PermissionLib.MultiTargetPermission[] memory permissions)
   {
-    if (_payload.currentHelpers.length != 5) {
+    if (_payload.currentHelpers.length != 6) {
       revert WrongHelpersArrayLength(_payload.currentHelpers.length);
     }
 
@@ -284,9 +294,10 @@ contract VESystemSetup is PluginSetup {
     address queueProxy = _payload.currentHelpers[2];
     address nftProxy = _payload.currentHelpers[3];
     address adapterProxy = _payload.currentHelpers[4];
+    address voterProxy = _payload.currentHelpers[5];
 
     // Revoke all permissions granted during installation
-    permissions = new PermissionLib.MultiTargetPermission[](13);
+    permissions = new PermissionLib.MultiTargetPermission[](15);
 
     // Revoke VotingEscrow permissions
     permissions[0] = PermissionLib.MultiTargetPermission({
@@ -396,6 +407,23 @@ contract VESystemSetup is PluginSetup {
       who: escrowProxy,
       condition: PermissionLib.NO_CONDITION,
       permissionId: EscrowIVotesAdapter(adapterProxy).DELEGATION_TOKEN_ROLE()
+    });
+
+    // Revoke AddressGaugeVoter permissions
+    permissions[13] = PermissionLib.MultiTargetPermission({
+      operation: PermissionLib.Operation.Revoke,
+      where: voterProxy,
+      who: _dao,
+      condition: PermissionLib.NO_CONDITION,
+      permissionId: AddressGaugeVoter(voterProxy).GAUGE_ADMIN_ROLE()
+    });
+
+    permissions[14] = PermissionLib.MultiTargetPermission({
+      operation: PermissionLib.Operation.Revoke,
+      where: voterProxy,
+      who: _dao,
+      condition: PermissionLib.NO_CONDITION,
+      permissionId: keccak256("EXECUTE_PERMISSION")
     });
   }
 }

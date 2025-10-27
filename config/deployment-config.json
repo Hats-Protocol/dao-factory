@@ -1,0 +1,46 @@
+{
+  "version": "1.0.0",
+  "network": "sepolia",
+  "dao": {
+    "metadataUri": "ipfs://QmXx4T81ZDuWQBMvXYTzPbbZAQJLGd7aF9ELvt6YihCw4c",
+    "subdomain": ""
+  },
+  "veSystem": {
+    "underlyingToken": "0x4e15661a87b668956f059de301c6570f3ffcaa86",
+    "minDeposit": "1000000000000000000",
+    "veTokenName": "Vote Escrowed TEST",
+    "veTokenSymbol": "veTEST",
+    "minLockDuration": 15724800,
+    "feePercent": 0,
+    "cooldownPeriod": 0
+  },
+  "votingPowerCurve": {
+    "constantCoefficient": "1000000000000000000",
+    "linearCoefficient": "0",
+    "quadraticCoefficient": "0",
+    "maxEpochs": 0
+  },
+  "addressGaugeVoter": {
+    "enableUpdateVotingPowerHook": true,
+    "startPaused": false
+  },
+  "tokenVotingHats": {
+    "votingMode": "Standard",
+    "supportThreshold": 10000,
+    "minParticipation": 0,
+    "minDuration": 3600,
+    "minProposerVotingPower": "0",
+    "proposerHatId": "0x0000071c00030000000000000000000000000000000000000000000000000000",
+    "voterHatId": "0x0000071c00030000000000000000000000000000000000000000000000000000",
+    "executorHatId": "0x0000000000000000000000000000000000000000000000000000000000000001",
+    "release": 1,
+    "build": 1,
+    "useExisting": true,
+    "repositoryAddress": "0xe4a0dE2301e9c9A305DC5aed0348A3bB50B3e063",
+    "governanceErc20": "0xA03C2182af8eC460D498108C92E8638a580b94d4",
+    "governanceWrappedErc20": "0x6E924eA5864044D8642385683fFA5AD42FB687f2"
+  },
+  "adminPlugin": {
+    "adminAddress": "0x624123ec4A9f48Be7AA8a307a74381E4ea7530D4"
+  }
+}

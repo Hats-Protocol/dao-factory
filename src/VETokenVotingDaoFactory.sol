@@ -21,44 +21,76 @@ import {LockV1_2_0 as Lock} from "@lock/Lock_v1_2_0.sol";
 import {LinearIncreasingCurve as Curve} from "@curve/LinearIncreasingCurve.sol";
 import {DynamicExitQueue as ExitQueue} from "@queue/DynamicExitQueue.sol";
 import {EscrowIVotesAdapter} from "@delegation/EscrowIVotesAdapter.sol";
+import {AddressGaugeVoter} from "@voting/AddressGaugeVoter.sol";
 
 import {VESystemSetup, VESystemSetupParams} from "./VESystemSetup.sol";
 import {TokenVotingSetupHats} from "@token-voting-hats/TokenVotingSetupHats.sol";
 import {TokenVotingHats} from "@token-voting-hats/TokenVotingHats.sol";
+import {AdminSetup} from "@admin-plugin/AdminSetup.sol";
+import {Admin} from "@admin-plugin/Admin.sol";
 import {MajorityVotingBase} from "@token-voting-hats/base/MajorityVotingBase.sol";
 import {IPlugin} from "@aragon/osx-commons-contracts/src/plugin/IPlugin.sol";
 import {GovernanceERC20} from "@token-voting-hats/erc20/GovernanceERC20.sol";
 
+/// @notice DAO configuration parameters
+struct DaoConfig {
+    string metadataUri;
+    string subdomain;
+}
 
-/// @notice The struct containing all the parameters to deploy the DAO
-struct DeploymentParameters {
-    // DAO settings
-    address daoExecutor;
-    string daoMetadataURI;
-    string daoSubdomain;
-
-    // VE token parameters
+/// @notice Comprehensive VE system configuration
+struct VeSystemConfig {
+    // Underlying token
     address underlyingToken;
+    uint256 minDeposit;
+    // VE token naming
     string veTokenName;
     string veTokenSymbol;
-    uint256 minDeposit;
-
-    // VE system settings (fixed for flat curve)
+    // Voting escrow settings
     uint48 minLockDuration;
     uint16 feePercent;
     uint48 cooldownPeriod;
+    // Voting power curve parameters
+    int256 curveConstant;
+    int256 curveLinear;
+    int256 curveQuadratic;
+    uint48 curveMaxEpochs;
+}
 
-    // Hats configuration
+/// @notice Token voting hats plugin configuration (flattened for ease of use)
+struct TokenVotingHatsPluginConfig {
+    // Governance settings
+    MajorityVotingBase.VotingMode votingMode;
+    uint32 supportThreshold;
+    uint32 minParticipation;
+    uint64 minDuration;
+    uint256 minProposerVotingPower;
+    // Hats Protocol settings
     uint256 proposerHatId;
     uint256 voterHatId;
     uint256 executorHatId;
+}
+
+/// @notice The struct containing all the parameters to deploy the DAO
+struct DeploymentParameters {
+    // Configuration structs
+    DaoConfig dao;
+    VeSystemConfig veSystem;
+    TokenVotingHatsPluginConfig tokenVotingHats;
 
     // Plugin setup contracts (must be deployed first)
     VESystemSetup veSystemSetup;
     TokenVotingSetupHats tokenVotingSetup;
     PluginRepo tokenVotingPluginRepo;
+    AdminSetup adminSetup;
+    PluginRepo adminPluginRepo;
+    address adminAddress;
 
-    // OSx addresses (chain-specific)
+    // Plugin repo version info
+    uint8 pluginRepoRelease;
+    uint16 pluginRepoBuild;
+
+    // OSx framework addresses (chain-specific)
     address osxDaoFactory;
     PluginSetupProcessor pluginSetupProcessor;
     PluginRepoFactory pluginRepoFactory;
@@ -72,6 +104,7 @@ struct VEPluginSet {
     ExitQueue exitQueue;
     Lock nftLock;
     EscrowIVotesAdapter ivotesAdapter;
+    AddressGaugeVoter voter;
 }
 
 /// @notice Contains the artifacts that resulted from running a deployment
@@ -80,25 +113,12 @@ struct Deployment {
     VEPluginSet veSystem;
     TokenVotingHats tokenVotingPlugin;
     PluginRepo tokenVotingPluginRepo;
+    Admin adminPlugin;
+    PluginRepo adminPluginRepo;
 }
 
 /// @notice A singleton contract designed to run the deployment once and become a read-only store of the contracts deployed
 contract VETokenVotingDaoFactory {
-    // Flat curve configuration constants - 1:1 ratio (1 token locked = 1 vote)
-    int256 constant CURVE_CONSTANT_COEFF = 1e18;
-    int256 constant CURVE_LINEAR_COEFF = 0;
-    int256 constant CURVE_QUADRATIC_COEFF = 0;
-    uint48 constant CURVE_MAX_EPOCHS = 0;
-
-    // Default voting settings (for testing)
-    uint32 constant DEFAULT_SUPPORT_THRESHOLD = 10000;   // 1% (10,000 / 1,000,000)
-    uint32 constant DEFAULT_MIN_PARTICIPATION = 0;       // 0% (no quorum requirement)
-    uint64 constant DEFAULT_MIN_DURATION = 3600;         // 60 minutes (minimum allowed by plugin)
-    uint256 constant DEFAULT_MIN_PROPOSER_VOTING_POWER = 0;
-
-    // Plugin repo version
-    uint8 constant PLUGIN_REPO_RELEASE = 1;
-    uint16 constant PLUGIN_REPO_BUILD = 1;
 
     function version() external pure returns (string memory) {
         return "1.0.0";
@@ -110,22 +130,24 @@ contract VETokenVotingDaoFactory {
     Deployment deployment;
 
     constructor(DeploymentParameters memory _parameters) {
-        parameters.daoExecutor = _parameters.daoExecutor;
-        parameters.daoMetadataURI = _parameters.daoMetadataURI;
-        parameters.daoSubdomain = _parameters.daoSubdomain;
-        parameters.underlyingToken = _parameters.underlyingToken;
-        parameters.veTokenName = _parameters.veTokenName;
-        parameters.veTokenSymbol = _parameters.veTokenSymbol;
-        parameters.minDeposit = _parameters.minDeposit;
-        parameters.minLockDuration = _parameters.minLockDuration;
-        parameters.feePercent = _parameters.feePercent;
-        parameters.cooldownPeriod = _parameters.cooldownPeriod;
-        parameters.proposerHatId = _parameters.proposerHatId;
-        parameters.voterHatId = _parameters.voterHatId;
-        parameters.executorHatId = _parameters.executorHatId;
+        // Configuration structs
+        parameters.dao = _parameters.dao;
+        parameters.veSystem = _parameters.veSystem;
+        parameters.tokenVotingHats = _parameters.tokenVotingHats;
+
+        // Plugin setup contracts
         parameters.veSystemSetup = _parameters.veSystemSetup;
         parameters.tokenVotingSetup = _parameters.tokenVotingSetup;
         parameters.tokenVotingPluginRepo = _parameters.tokenVotingPluginRepo;
+        parameters.adminSetup = _parameters.adminSetup;
+        parameters.adminPluginRepo = _parameters.adminPluginRepo;
+        parameters.adminAddress = _parameters.adminAddress;
+
+        // Plugin repo version info
+        parameters.pluginRepoRelease = _parameters.pluginRepoRelease;
+        parameters.pluginRepoBuild = _parameters.pluginRepoBuild;
+
+        // OSx framework addresses
         parameters.osxDaoFactory = _parameters.osxDaoFactory;
         parameters.pluginSetupProcessor = _parameters.pluginSetupProcessor;
         parameters.pluginRepoFactory = _parameters.pluginRepoFactory;
@@ -146,6 +168,10 @@ contract VETokenVotingDaoFactory {
         deployment.tokenVotingPlugin = tvPlugin;
         deployment.tokenVotingPluginRepo = tvRepo;
 
+        (Admin adminPlugin, PluginRepo adminRepo) = _installAdminPlugin(dao);
+        deployment.adminPlugin = adminPlugin;
+        deployment.adminPluginRepo = adminRepo;
+
         _revokeApplyInstallationPermissions(dao);
         _revokeOwnerPermission(dao);
     }
@@ -155,44 +181,36 @@ contract VETokenVotingDaoFactory {
             DAOFactory.DAOSettings({
                 trustedForwarder: address(0),
                 daoURI: "",
-                subdomain: parameters.daoSubdomain,
-                metadata: bytes(parameters.daoMetadataURI)
+                subdomain: parameters.dao.subdomain,
+                metadata: bytes(parameters.dao.metadataUri)
             }),
             new DAOFactory.PluginSettings[](0)
         );
 
-        address daoExecutor = parameters.daoExecutor;
-        Action[] memory actions = new Action[](daoExecutor == address(0) ? 1 : 2);
+        // Grant ROOT_PERMISSION to this factory so it can install plugins
+        Action[] memory actions = new Action[](1);
         actions[0].to = address(dao);
         actions[0].data = abi.encodeCall(
             PermissionManager.grant,
             (address(dao), address(this), dao.ROOT_PERMISSION_ID())
         );
 
-        if (daoExecutor != address(0)) {
-            actions[1].to = address(dao);
-            actions[1].data = abi.encodeCall(
-                PermissionManager.grant,
-                (address(dao), daoExecutor, dao.EXECUTE_PERMISSION_ID())
-            );
-        }
-
         dao.execute(bytes32(0), actions, 0);
     }
 
     function _deployVESystem(DAO dao) internal returns (VEPluginSet memory veSystem) {
         VESystemSetupParams memory setupParams = VESystemSetupParams({
-            underlyingToken: parameters.underlyingToken,
-            veTokenName: parameters.veTokenName,
-            veTokenSymbol: parameters.veTokenSymbol,
-            minDeposit: parameters.minDeposit,
-            minLockDuration: parameters.minLockDuration,
-            feePercent: parameters.feePercent,
-            cooldownPeriod: parameters.cooldownPeriod,
-            curveConstant: CURVE_CONSTANT_COEFF,
-            curveLinear: CURVE_LINEAR_COEFF,
-            curveQuadratic: CURVE_QUADRATIC_COEFF,
-            curveMaxEpochs: CURVE_MAX_EPOCHS
+            underlyingToken: parameters.veSystem.underlyingToken,
+            veTokenName: parameters.veSystem.veTokenName,
+            veTokenSymbol: parameters.veSystem.veTokenSymbol,
+            minDeposit: parameters.veSystem.minDeposit,
+            minLockDuration: parameters.veSystem.minLockDuration,
+            feePercent: parameters.veSystem.feePercent,
+            cooldownPeriod: parameters.veSystem.cooldownPeriod,
+            curveConstant: parameters.veSystem.curveConstant,
+            curveLinear: parameters.veSystem.curveLinear,
+            curveQuadratic: parameters.veSystem.curveQuadratic,
+            curveMaxEpochs: parameters.veSystem.curveMaxEpochs
         });
 
         (address escrowProxy, IPluginSetup.PreparedSetupData memory preparedSetupData) =
@@ -204,6 +222,7 @@ contract VETokenVotingDaoFactory {
         veSystem.exitQueue = ExitQueue(preparedSetupData.helpers[2]);
         veSystem.nftLock = Lock(preparedSetupData.helpers[3]);
         veSystem.ivotesAdapter = EscrowIVotesAdapter(preparedSetupData.helpers[4]);
+        veSystem.voter = AddressGaugeVoter(preparedSetupData.helpers[5]);
 
         for (uint256 i = 0; i < preparedSetupData.permissions.length; i++) {
             PermissionLib.MultiTargetPermission memory perm = preparedSetupData.permissions[i];
@@ -226,6 +245,7 @@ contract VETokenVotingDaoFactory {
         veSystem.votingEscrow.setQueue(address(veSystem.exitQueue));
         veSystem.votingEscrow.setLockNFT(address(veSystem.nftLock));
         veSystem.votingEscrow.setIVotesAdapter(address(veSystem.ivotesAdapter));
+        veSystem.votingEscrow.setVoter(address(veSystem.voter));
 
         // Revoke temporary permission
         dao.revoke(
@@ -252,15 +272,15 @@ contract VETokenVotingDaoFactory {
             pluginRepo = parameters.tokenVotingPluginRepo;
         }
 
-        PluginRepo.Tag memory repoTag = PluginRepo.Tag(PLUGIN_REPO_RELEASE, PLUGIN_REPO_BUILD);
+        PluginRepo.Tag memory repoTag = PluginRepo.Tag(parameters.pluginRepoRelease, parameters.pluginRepoBuild);
 
         bytes memory installData = parameters.tokenVotingSetup.encodeInstallationParametersHats(
             MajorityVotingBase.VotingSettings({
-                votingMode: MajorityVotingBase.VotingMode.Standard,
-                supportThreshold: DEFAULT_SUPPORT_THRESHOLD,
-                minParticipation: DEFAULT_MIN_PARTICIPATION,
-                minDuration: DEFAULT_MIN_DURATION,
-                minProposerVotingPower: DEFAULT_MIN_PROPOSER_VOTING_POWER
+                votingMode: parameters.tokenVotingHats.votingMode,
+                supportThreshold: parameters.tokenVotingHats.supportThreshold,
+                minParticipation: parameters.tokenVotingHats.minParticipation,
+                minDuration: parameters.tokenVotingHats.minDuration,
+                minProposerVotingPower: parameters.tokenVotingHats.minProposerVotingPower
             }),
             TokenVotingSetupHats.TokenSettings({
                 addr: address(veSystem.ivotesAdapter),
@@ -280,9 +300,9 @@ contract VETokenVotingDaoFactory {
             bytes(""),
             new address[](0),
             TokenVotingSetupHats.HatsConfig({
-                proposerHatId: parameters.proposerHatId,
-                voterHatId: parameters.voterHatId,
-                executorHatId: parameters.executorHatId
+                proposerHatId: parameters.tokenVotingHats.proposerHatId,
+                voterHatId: parameters.tokenVotingHats.voterHatId,
+                executorHatId: parameters.tokenVotingHats.executorHatId
             })
         );
 
@@ -306,6 +326,43 @@ contract VETokenVotingDaoFactory {
         );
 
         plugin = TokenVotingHats(pluginAddress);
+    }
+
+    function _installAdminPlugin(DAO dao) internal returns (Admin plugin, PluginRepo pluginRepo) {
+        pluginRepo = parameters.adminPluginRepo;
+
+        // Use release 1, build 2 (latest admin plugin version)
+        PluginRepo.Tag memory repoTag = PluginRepo.Tag(1, 2);
+
+        // Encode installation parameters: admin address and target config
+        bytes memory installData = abi.encode(
+            parameters.adminAddress,
+            IPlugin.TargetConfig({
+                target: address(dao),
+                operation: IPlugin.Operation.Call
+            })
+        );
+
+        (address pluginAddress, IPluginSetup.PreparedSetupData memory preparedSetupData) =
+            parameters.pluginSetupProcessor.prepareInstallation(
+                address(dao),
+                PluginSetupProcessor.PrepareInstallationParams({
+                    pluginSetupRef: PluginSetupRef(repoTag, pluginRepo),
+                    data: installData
+                })
+            );
+
+        parameters.pluginSetupProcessor.applyInstallation(
+            address(dao),
+            PluginSetupProcessor.ApplyInstallationParams({
+                pluginSetupRef: PluginSetupRef(repoTag, pluginRepo),
+                plugin: pluginAddress,
+                permissions: preparedSetupData.permissions,
+                helpersHash: hashHelpers(preparedSetupData.helpers)
+            })
+        );
+
+        plugin = Admin(pluginAddress);
     }
 
     function _grantApplyInstallationPermissions(DAO dao) internal {

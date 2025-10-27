@@ -1,4 +1,10 @@
 {
+  "lib/admin-plugin": {
+    "tag": {
+      "name": "v1.2.5",
+      "rev": "5a9eb3a0861b3bd9b5defc9fb49a0ef8175c2512"
+    }
+  },
   "lib/forge-std": {
     "rev": "1cefc0e4e3d2a1f604c654004c90bd6701b2b5e2"
   },

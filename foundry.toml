@@ -34,6 +34,8 @@ remappings = [
   # Capital Distributor (will use ve-governance's osx-commons via @aragon/commons)
   "@capital-distributor/=lib/osx-capital-distributor/src/",
   "@aragon/conditions/=lib/osx-capital-distributor/lib/conditions/src/",
+  # Admin Plugin
+  "@admin-plugin/=lib/admin-plugin/packages/contracts/src/",
   # OpenZeppelin
   "@openzeppelin/contracts/=lib/token-voting-plugin/lib/openzeppelin-contracts/contracts/",
   "@openzeppelin/contracts-upgradeable/=lib/ve-governance/lib/openzeppelin-contracts-upgradeable/contracts/",
@@ -41,7 +43,9 @@ remappings = [
 # Enable tests to read ir-optimized bytecode precompiled by profile.optimized
 fs_permissions = [
   { access = "read", path = "./optimized-out" },
-  { access = "read", path = "./lib/osx/packages/artifacts/src/addresses.json" }
+  { access = "read", path = "./lib/osx/packages/artifacts/src/addresses.json" },
+  { access = "read", path = "./lib/admin-plugin/packages/artifacts/src/addresses.json" },
+  { access = "read", path = "./config/" }
 ]
 
 # for pre-compiling ir-optimized bytecode that will be later deployed by tests
