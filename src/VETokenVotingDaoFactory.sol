@@ -86,6 +86,9 @@ struct DeploymentParameters {
     PluginRepo adminPluginRepo;
     address adminAddress;
 
+    // Plugin metadata
+    string tokenVotingHatsMetadata;
+
     // Plugin repo version info
     uint8 pluginRepoRelease;
     uint16 pluginRepoBuild;
@@ -142,6 +145,9 @@ contract VETokenVotingDaoFactory {
         parameters.adminSetup = _parameters.adminSetup;
         parameters.adminPluginRepo = _parameters.adminPluginRepo;
         parameters.adminAddress = _parameters.adminAddress;
+
+        // Plugin metadata
+        parameters.tokenVotingHatsMetadata = _parameters.tokenVotingHatsMetadata;
 
         // Plugin repo version info
         parameters.pluginRepoRelease = _parameters.pluginRepoRelease;
@@ -297,7 +303,7 @@ contract VETokenVotingDaoFactory {
                 operation: IPlugin.Operation.Call
             }),
             0,
-            bytes(""),
+            bytes(parameters.tokenVotingHatsMetadata),
             new address[](0),
             TokenVotingSetupHats.HatsConfig({
                 proposerHatId: parameters.tokenVotingHats.proposerHatId,

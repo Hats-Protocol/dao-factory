@@ -64,6 +64,7 @@ contract DeployDaoFromConfigScript is Script {
     uint256 proposerHatId;
     uint256 voterHatId;
     uint256 executorHatId;
+    string metadata;
     // Script-only fields
     uint8 release;
     uint16 build;
@@ -144,6 +145,8 @@ contract DeployDaoFromConfigScript is Script {
       vm.parseJsonUint(json, ".tokenVotingHats.voterHatId");
     config.tokenVotingHats.executorHatId =
       vm.parseJsonUint(json, ".tokenVotingHats.executorHatId");
+    config.tokenVotingHats.metadata =
+      vm.parseJsonString(json, ".tokenVotingHats.metadata");
     config.tokenVotingHats.release =
       uint8(vm.parseJsonUint(json, ".tokenVotingHats.release"));
     config.tokenVotingHats.build =
@@ -333,6 +336,8 @@ contract DeployDaoFromConfigScript is Script {
       adminSetup: adminSetup,
       adminPluginRepo: PluginRepo(adminPluginRepo),
       adminAddress: config.adminPlugin.adminAddress,
+      // Plugin metadata
+      tokenVotingHatsMetadata: config.tokenVotingHats.metadata,
       // Plugin repo version info
       pluginRepoRelease: config.tokenVotingHats.release,
       pluginRepoBuild: config.tokenVotingHats.build,
