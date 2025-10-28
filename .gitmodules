@@ -1,9 +1,6 @@
 [submodule "lib/forge-std"]
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
-[submodule "lib/ve-governance"]
-	path = lib/ve-governance
-	url = https://github.com/aragon/ve-governance
 [submodule "lib/token-voting-plugin"]
 	path = lib/token-voting-plugin
 	url = https://github.com/hats-protocol/token-voting-plugin
@@ -21,3 +18,7 @@
 [submodule "lib/admin-plugin"]
 	path = lib/admin-plugin
 	url = https://github.com/aragon/admin-plugin
+[submodule "lib/ve-governance"]
+	path = lib/ve-governance
+	url = https://github.com/hats-protocol/ve-governance
+	branch = self-delegating-adapter

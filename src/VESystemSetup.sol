@@ -12,6 +12,7 @@ import { ClockV1_2_0 as Clock } from "@clock/Clock_v1_2_0.sol";
 import { LockV1_2_0 as Lock } from "@lock/Lock_v1_2_0.sol";
 import { LinearIncreasingCurve as Curve } from "@curve/LinearIncreasingCurve.sol";
 import { DynamicExitQueue as ExitQueue } from "@queue/DynamicExitQueue.sol";
+import { SelfDelegationEscrowIVotesAdapter } from "@delegation/SelfDelegationEscrowIVotesAdapter.sol";
 import { EscrowIVotesAdapter } from "@delegation/EscrowIVotesAdapter.sol";
 import { AddressGaugeVoter } from "@voting/AddressGaugeVoter.sol";
 
@@ -211,7 +212,7 @@ contract VESystemSetup is PluginSetup {
       where: adapterProxy,
       who: dao,
       condition: PermissionLib.NO_CONDITION,
-      permissionId: EscrowIVotesAdapter(adapterProxy).DELEGATION_ADMIN_ROLE()
+      permissionId: SelfDelegationEscrowIVotesAdapter(adapterProxy).DELEGATION_ADMIN_ROLE()
     });
 
     permissions[8] = PermissionLib.MultiTargetPermission({
@@ -219,7 +220,7 @@ contract VESystemSetup is PluginSetup {
       where: adapterProxy,
       who: dao,
       condition: PermissionLib.NO_CONDITION,
-      permissionId: EscrowIVotesAdapter(adapterProxy).DELEGATION_TOKEN_ROLE()
+      permissionId: SelfDelegationEscrowIVotesAdapter(adapterProxy).DELEGATION_TOKEN_ROLE()
     });
 
     // Component cross-permissions (components need to call each other)
@@ -252,7 +253,7 @@ contract VESystemSetup is PluginSetup {
       where: adapterProxy,
       who: plugin,
       condition: PermissionLib.NO_CONDITION,
-      permissionId: EscrowIVotesAdapter(adapterProxy).DELEGATION_TOKEN_ROLE()
+      permissionId: SelfDelegationEscrowIVotesAdapter(adapterProxy).DELEGATION_TOKEN_ROLE()
     });
 
     // AddressGaugeVoter permissions
@@ -365,7 +366,7 @@ contract VESystemSetup is PluginSetup {
       where: adapterProxy,
       who: _dao,
       condition: PermissionLib.NO_CONDITION,
-      permissionId: EscrowIVotesAdapter(adapterProxy).DELEGATION_ADMIN_ROLE()
+      permissionId: SelfDelegationEscrowIVotesAdapter(adapterProxy).DELEGATION_ADMIN_ROLE()
     });
 
     permissions[8] = PermissionLib.MultiTargetPermission({
@@ -373,7 +374,7 @@ contract VESystemSetup is PluginSetup {
       where: adapterProxy,
       who: _dao,
       condition: PermissionLib.NO_CONDITION,
-      permissionId: EscrowIVotesAdapter(adapterProxy).DELEGATION_TOKEN_ROLE()
+      permissionId: SelfDelegationEscrowIVotesAdapter(adapterProxy).DELEGATION_TOKEN_ROLE()
     });
 
     // Revoke component cross-permissions
@@ -406,7 +407,7 @@ contract VESystemSetup is PluginSetup {
       where: adapterProxy,
       who: escrowProxy,
       condition: PermissionLib.NO_CONDITION,
-      permissionId: EscrowIVotesAdapter(adapterProxy).DELEGATION_TOKEN_ROLE()
+      permissionId: SelfDelegationEscrowIVotesAdapter(adapterProxy).DELEGATION_TOKEN_ROLE()
     });
 
     // Revoke AddressGaugeVoter permissions

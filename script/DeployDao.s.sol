@@ -24,7 +24,7 @@ import { VotingEscrowV1_2_0 as VotingEscrow } from "@escrow/VotingEscrowIncreasi
 import { LinearIncreasingCurve as Curve } from "@curve/LinearIncreasingCurve.sol";
 import { DynamicExitQueue as ExitQueue } from "@queue/DynamicExitQueue.sol";
 import { LockV1_2_0 as Lock } from "@lock/Lock_v1_2_0.sol";
-import { EscrowIVotesAdapter } from "@delegation/EscrowIVotesAdapter.sol";
+import { SelfDelegationEscrowIVotesAdapter } from "@delegation/SelfDelegationEscrowIVotesAdapter.sol";
 import { AddressGaugeVoter } from "@voting/AddressGaugeVoter.sol";
 
 import { PluginSetupProcessor } from "@aragon/osx/framework/plugin/setup/PluginSetupProcessor.sol";
@@ -228,8 +228,8 @@ contract DeployDaoFromConfigScript is Script {
     Lock lockBase = new Lock();
     console.log("Lock base:", address(lockBase));
 
-    // Deploy IVotesAdapter with curve parameters from config (baked into implementation)
-    EscrowIVotesAdapter ivotesAdapterBase = new EscrowIVotesAdapter(
+    // Deploy SelfDelegationEscrowIVotesAdapter with curve parameters from config (baked into implementation)
+    SelfDelegationEscrowIVotesAdapter ivotesAdapterBase = new SelfDelegationEscrowIVotesAdapter(
       [
         config.votingPowerCurve.constantCoefficient,
         config.votingPowerCurve.linearCoefficient,
@@ -237,7 +237,7 @@ contract DeployDaoFromConfigScript is Script {
       ],
       config.votingPowerCurve.maxEpochs
     );
-    console.log("IVotesAdapter base:", address(ivotesAdapterBase));
+    console.log("SelfDelegationEscrowIVotesAdapter base:", address(ivotesAdapterBase));
 
     // Deploy AddressGaugeVoter base
     AddressGaugeVoter voterBase = new AddressGaugeVoter();

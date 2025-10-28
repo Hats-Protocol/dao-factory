@@ -30,6 +30,9 @@
     }
   },
   "lib/ve-governance": {
-    "rev": "8a37bbdb63129d501f473d46537b01b8c8fb40e1"
+    "branch": {
+      "name": "self-delegating-adapter",
+      "rev": "0b739d574d94675e2f34367f69c86efd5d8b461a"
+    }
   }
 }
