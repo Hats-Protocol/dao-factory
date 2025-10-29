@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
+import { console2 } from "forge-std/console2.sol";
 import { FactoryTestBase } from "../base/FactoryTestBase.sol";
 import { DeploymentParameters, VETokenVotingDaoFactory } from "../../src/VETokenVotingDaoFactory.sol";
 
@@ -23,7 +24,7 @@ contract ForkDeploymentTest is FactoryTestBase {
 
   function test_DeployOnSepoliaFork() public {
     // Deploy factory and DAO using the script (fork already set up in setUp)
-    factory = deployFactory();
+    (factory,) = deployDao();
 
     // Verify deployment succeeded
     assertNotEq(address(factory), address(0), "Factory not deployed on fork");
@@ -35,7 +36,7 @@ contract ForkDeploymentTest is FactoryTestBase {
 
   function test_RealOSxContractsUsed() public {
     // Deploy factory (fork already set up in setUp)
-    factory = deployFactory();
+    (factory,) = deployDao();
 
     // Get deployment parameters to check OSx addresses
     DeploymentParameters memory params = factory.getDeploymentParameters();
@@ -56,7 +57,10 @@ contract ForkDeploymentTest is FactoryTestBase {
 
   function test_FullDaoDeployment() public {
     // Deploy factory and DAO (fork already set up)
-    factory = deployFactory();
+    (factory, deployScript) = deployDao();
+
+    // Verify deployer is set
+    assertEq(address(factory.deployer()), address(deployScript), "Deployer should be the deploy script contract");
 
     // Verify DAO deployed
     assertNotEq(address(deployment.dao), address(0), "DAO not deployed");
@@ -87,16 +91,31 @@ contract ForkDeploymentTest is FactoryTestBase {
 
   function test_DoubleDeploymentReverts() public {
     // Deploy factory and DAO
-    factory = deployFactory();
+    (factory, deployScript) = deployDao();
 
     // Second deployment should revert
+    vm.prank(address(deployScript)); // The script is the deployer
     vm.expectRevert(VETokenVotingDaoFactory.AlreadyDeployed.selector);
+    factory.deployOnce();
+  }
+
+  function test_UnauthorizedDeploymentReverts() public {
+    address unauthorizedCaller = makeAddr("unauthorizedCaller");
+
+    // Deploy factory and DAO
+    (factory,) = deployDao();
+
+    assertNotEq(address(factory.deployer()), unauthorizedCaller, "Deployer should not be unauthorizedCaller");
+
+    // Second deployment should revert
+    vm.prank(unauthorizedCaller);
+    vm.expectRevert(VETokenVotingDaoFactory.Unauthorized.selector);
     factory.deployOnce();
   }
 
   function test_PermissionAssertionHelpers() public {
     // Deploy factory and DAO
-    factory = deployFactory();
+    (factory,) = deployDao();
 
     // Test assertHasPermission - DAO should have ROOT on itself
     assertHasPermission(address(dao), address(dao), dao.ROOT_PERMISSION_ID(), "DAO should have ROOT on itself");

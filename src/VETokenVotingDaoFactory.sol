@@ -122,21 +122,20 @@ struct Deployment {
 
 /// @notice A singleton contract designed to run the deployment once and become a read-only store of the contracts deployed
 contract VETokenVotingDaoFactory {
+  address public immutable deployer;
 
     function version() external pure returns (string memory) {
         return "1.0.0";
     }
 
-    error AlreadyDeployed();
+  error Unauthorized();
 
     DeploymentParameters parameters;
     Deployment deployment;
 
-    constructor(DeploymentParameters memory _parameters) {
-        // Configuration structs
-        parameters.dao = _parameters.dao;
-        parameters.veSystem = _parameters.veSystem;
-        parameters.tokenVotingHats = _parameters.tokenVotingHats;
+    // Record the deployer to prevent unauthorized deployments
+    deployer = msg.sender;
+
 
         // Plugin setup contracts
         parameters.veSystemSetup = _parameters.veSystemSetup;

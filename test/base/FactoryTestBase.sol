@@ -24,7 +24,7 @@ import { Admin } from "@admin-plugin/Admin.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Hats Protocol
-import { IHats } from "hats-protocol/src/Interfaces/IHats.sol";
+import { IHats } from "@hats-protocol/Interfaces/IHats.sol";
 
 /**
  * @title FactoryTestBase
@@ -214,7 +214,8 @@ abstract contract FactoryTestBase is Test {
   /// @dev This runs the actual DeployDaoFromConfigScript.execute() function
   /// @dev NOTE: This creates a NEW script instance to ensure it's on the current fork
   /// @return Deployed factory instance
-  function deployFactoryAndDao() internal returns (VETokenVotingDaoFactory) {
+  /// @return Deployed script instance
+  function deployFactoryAndDao() internal returns (VETokenVotingDaoFactory, DeployDaoFromConfigScript) {
     // Create a NEW script instance on the current fork
     // (the one created in setUp() might be on a different fork)
     DeployDaoFromConfigScript script = new DeployDaoFromConfigScript();
@@ -239,7 +240,7 @@ abstract contract FactoryTestBase is Test {
     // Set up Hats Protocol infrastructure
     _setupHats();
 
-    return factory;
+    return (factory, script);
   }
 
   /// @notice Set up Hats Protocol after deployment
@@ -255,7 +256,7 @@ abstract contract FactoryTestBase is Test {
   }
 
   /// @notice Convenience alias for deployFactoryAndDao()
-  function deployFactory() internal returns (VETokenVotingDaoFactory) {
+  function deployDao() internal returns (VETokenVotingDaoFactory, DeployDaoFromConfigScript) {
     return deployFactoryAndDao();
   }
 
@@ -298,12 +299,10 @@ abstract contract FactoryTestBase is Test {
   /// @param actions Array of actions to execute
   /// @param allowFailureMap Bitmap for actions that can fail
   /// @return proposalId The ID of the created proposal
-  function createProposal(
-    address proposer,
-    bytes memory metadata,
-    Action[] memory actions,
-    uint256 allowFailureMap
-  ) internal returns (uint256 proposalId) {
+  function createProposal(address proposer, bytes memory metadata, Action[] memory actions, uint256 allowFailureMap)
+    internal
+    returns (uint256 proposalId)
+  {
     vm.prank(proposer);
     proposalId = tokenVoting.createProposal(
       metadata,
