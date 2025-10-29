@@ -22,3 +22,6 @@
 	path = lib/ve-governance
 	url = https://github.com/hats-protocol/ve-governance
 	branch = self-delegating-adapter
+[submodule "lib/hats-protocol"]
+	path = lib/hats-protocol
+	url = https://github.com/hats-protocol/hats-protocol

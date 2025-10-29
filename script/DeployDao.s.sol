@@ -178,29 +178,35 @@ contract DeployDaoFromConfigScript is Script {
     revert(string.concat("Invalid voting mode: ", mode));
   }
 
-  function run() external {
+  /// @notice Execute the full deployment (called by run() or from tests)
+  /// @return factory The deployed factory contract
+  function execute() public returns (VETokenVotingDaoFactory factory) {
     // Load configuration from JSON
     _loadConfig();
 
     // Get OSx addresses for current chain
     (address osxDaoFactory, address pluginSetupProcessor, address pluginRepoFactory) = _getOSxAddresses();
 
-    vm.startBroadcast(_deployer());
-
     // ===== STEP 1: Deploy Plugin Setup Contracts =====
     (VESystemSetup veSystemSetup, TokenVotingSetupHats tokenVotingSetup, AdminSetup adminSetup) = _deployPluginSetups();
 
     // ===== STEP 2: Deploy VETokenVotingDaoFactory =====
-    VETokenVotingDaoFactory factory =
-      _deployFactory(veSystemSetup, tokenVotingSetup, adminSetup, osxDaoFactory, pluginSetupProcessor, pluginRepoFactory);
+    factory = _deployFactory(veSystemSetup, tokenVotingSetup, adminSetup, osxDaoFactory, pluginSetupProcessor, pluginRepoFactory);
 
     // ===== STEP 3: Deploy the DAO =====
     _deployDao(factory);
 
-    vm.stopBroadcast();
-
     // ===== STEP 4: Log deployment artifacts =====
     _logDeployment(factory);
+
+    return factory;
+  }
+
+  /// @notice Run script with broadcasting for actual deployment
+  function run() external {
+    vm.startBroadcast(_deployer());
+    execute();
+    vm.stopBroadcast();
   }
 
   /// @notice Deploys all plugin setup contracts and base implementations
