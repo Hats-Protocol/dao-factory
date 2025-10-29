@@ -129,40 +129,24 @@ contract DeployDaoFromConfigScript is Script {
     config.votingPowerCurve.maxEpochs = uint48(vm.parseJsonUint(json, ".votingPowerCurve.maxEpochs"));
 
     // Parse token voting hats plugin config (all fields flattened)
-    config.tokenVotingHats.votingMode =
-      vm.parseJsonString(json, ".tokenVotingHats.votingMode");
-    config.tokenVotingHats.supportThreshold =
-      uint32(vm.parseJsonUint(json, ".tokenVotingHats.supportThreshold"));
-    config.tokenVotingHats.minParticipation =
-      uint32(vm.parseJsonUint(json, ".tokenVotingHats.minParticipation"));
-    config.tokenVotingHats.minDuration =
-      uint64(vm.parseJsonUint(json, ".tokenVotingHats.minDuration"));
-    config.tokenVotingHats.minProposerVotingPower =
-      vm.parseJsonUint(json, ".tokenVotingHats.minProposerVotingPower");
-    config.tokenVotingHats.proposerHatId =
-      vm.parseJsonUint(json, ".tokenVotingHats.proposerHatId");
-    config.tokenVotingHats.voterHatId =
-      vm.parseJsonUint(json, ".tokenVotingHats.voterHatId");
-    config.tokenVotingHats.executorHatId =
-      vm.parseJsonUint(json, ".tokenVotingHats.executorHatId");
-    config.tokenVotingHats.metadata =
-      vm.parseJsonString(json, ".tokenVotingHats.metadata");
-    config.tokenVotingHats.release =
-      uint8(vm.parseJsonUint(json, ".tokenVotingHats.release"));
-    config.tokenVotingHats.build =
-      uint16(vm.parseJsonUint(json, ".tokenVotingHats.build"));
-    config.tokenVotingHats.useExisting =
-      vm.parseJsonBool(json, ".tokenVotingHats.useExisting");
-    config.tokenVotingHats.repositoryAddress =
-      vm.parseJsonAddress(json, ".tokenVotingHats.repositoryAddress");
-    config.tokenVotingHats.governanceErc20 =
-      vm.parseJsonAddress(json, ".tokenVotingHats.governanceErc20");
-    config.tokenVotingHats.governanceWrappedErc20 =
-      vm.parseJsonAddress(json, ".tokenVotingHats.governanceWrappedErc20");
+    config.tokenVotingHats.votingMode = vm.parseJsonString(json, ".tokenVotingHats.votingMode");
+    config.tokenVotingHats.supportThreshold = uint32(vm.parseJsonUint(json, ".tokenVotingHats.supportThreshold"));
+    config.tokenVotingHats.minParticipation = uint32(vm.parseJsonUint(json, ".tokenVotingHats.minParticipation"));
+    config.tokenVotingHats.minDuration = uint64(vm.parseJsonUint(json, ".tokenVotingHats.minDuration"));
+    config.tokenVotingHats.minProposerVotingPower = vm.parseJsonUint(json, ".tokenVotingHats.minProposerVotingPower");
+    config.tokenVotingHats.proposerHatId = vm.parseJsonUint(json, ".tokenVotingHats.proposerHatId");
+    config.tokenVotingHats.voterHatId = vm.parseJsonUint(json, ".tokenVotingHats.voterHatId");
+    config.tokenVotingHats.executorHatId = vm.parseJsonUint(json, ".tokenVotingHats.executorHatId");
+    config.tokenVotingHats.metadata = vm.parseJsonString(json, ".tokenVotingHats.metadata");
+    config.tokenVotingHats.release = uint8(vm.parseJsonUint(json, ".tokenVotingHats.release"));
+    config.tokenVotingHats.build = uint16(vm.parseJsonUint(json, ".tokenVotingHats.build"));
+    config.tokenVotingHats.useExisting = vm.parseJsonBool(json, ".tokenVotingHats.useExisting");
+    config.tokenVotingHats.repositoryAddress = vm.parseJsonAddress(json, ".tokenVotingHats.repositoryAddress");
+    config.tokenVotingHats.governanceErc20 = vm.parseJsonAddress(json, ".tokenVotingHats.governanceErc20");
+    config.tokenVotingHats.governanceWrappedErc20 = vm.parseJsonAddress(json, ".tokenVotingHats.governanceWrappedErc20");
 
     // Parse admin plugin config
-    config.adminPlugin.adminAddress =
-      vm.parseJsonAddress(json, ".adminPlugin.adminAddress");
+    config.adminPlugin.adminAddress = vm.parseJsonAddress(json, ".adminPlugin.adminAddress");
 
     console.log("Network:", config.network);
     console.log("Version:", config.version);
@@ -191,7 +175,9 @@ contract DeployDaoFromConfigScript is Script {
     (VESystemSetup veSystemSetup, TokenVotingSetupHats tokenVotingSetup, AdminSetup adminSetup) = _deployPluginSetups();
 
     // ===== STEP 2: Deploy VETokenVotingDaoFactory =====
-    factory = _deployFactory(veSystemSetup, tokenVotingSetup, adminSetup, osxDaoFactory, pluginSetupProcessor, pluginRepoFactory);
+    factory = _deployFactory(
+      veSystemSetup, tokenVotingSetup, adminSetup, osxDaoFactory, pluginSetupProcessor, pluginRepoFactory
+    );
 
     // ===== STEP 3: Deploy the DAO =====
     _deployDao(factory);
@@ -210,7 +196,10 @@ contract DeployDaoFromConfigScript is Script {
   }
 
   /// @notice Deploys all plugin setup contracts and base implementations
-  function _deployPluginSetups() internal returns (VESystemSetup veSystemSetup, TokenVotingSetupHats tokenVotingSetup, AdminSetup adminSetup) {
+  function _deployPluginSetups()
+    internal
+    returns (VESystemSetup veSystemSetup, TokenVotingSetupHats tokenVotingSetup, AdminSetup adminSetup)
+  {
     console.log("=== Deploying VE Base Implementations ===");
 
     // Deploy VE system base implementations (reused across all DAOs)
@@ -297,9 +286,8 @@ contract DeployDaoFromConfigScript is Script {
     console.log("=== Deploying VETokenVotingDaoFactory ===");
 
     // Determine plugin repo addresses based on config
-    address tokenVotingPluginRepo = config.tokenVotingHats.useExisting
-      ? config.tokenVotingHats.repositoryAddress
-      : address(0);
+    address tokenVotingPluginRepo =
+      config.tokenVotingHats.useExisting ? config.tokenVotingHats.repositoryAddress : address(0);
 
     address adminPluginRepo = _getAdminPluginRepo();
 

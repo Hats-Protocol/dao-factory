@@ -122,10 +122,7 @@ contract VESystemSetup is PluginSetup {
     );
 
     address voterProxy = voterBase.deployUUPSProxy(
-      abi.encodeCall(
-        AddressGaugeVoter.initialize,
-        (dao, escrowProxy, false, clockProxy, adapterProxy, true)
-      )
+      abi.encodeCall(AddressGaugeVoter.initialize, (dao, escrowProxy, false, clockProxy, adapterProxy, true))
     );
 
     // NOTE: Components are NOT wired together here - the factory will do that

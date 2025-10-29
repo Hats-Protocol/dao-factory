@@ -196,9 +196,7 @@ contract GovernanceFlowTest is FactoryTestBase {
 
     // Proposal should NOT be executable (participation threshold not met)
     // Config has 15% min participation, Alice has < 10% of total power
-    assertFalse(
-      tokenVoting.canExecute(proposalId), "Proposal should not be executable with insufficient participation"
-    );
+    assertFalse(tokenVoting.canExecute(proposalId), "Proposal should not be executable with insufficient participation");
 
     // Execution should revert
     vm.expectRevert();
@@ -274,20 +272,12 @@ contract GovernanceFlowTest is FactoryTestBase {
     actions[0] = Action({
       to: address(dao),
       value: 0,
-      data: abi.encodeWithSignature(
-        "grant(address,address,bytes32)", address(dao), newRecipient, EXECUTE_PERMISSION_ID
-      )
+      data: abi.encodeWithSignature("grant(address,address,bytes32)", address(dao), newRecipient, EXECUTE_PERMISSION_ID)
     });
 
     vm.prank(alice);
     uint256 proposalId = tokenVoting.createProposal(
-      "Grant EXECUTE_PERMISSION to new recipient",
-      actions,
-      0,
-      0,
-      0,
-      IMajorityVoting.VoteOption.None,
-      false
+      "Grant EXECUTE_PERMISSION to new recipient", actions, 0, 0, 0, IMajorityVoting.VoteOption.None, false
     );
 
     // Vote
@@ -321,7 +311,6 @@ contract GovernanceFlowTest is FactoryTestBase {
   // ============================================
 
   function test_VeSystemParameterUpdate() public {
-
     // Setup participants
     _setupDaoMember(alice, STANDARD_LOCK_AMOUNT);
     _setupDaoMember(bob, STANDARD_LOCK_AMOUNT);
@@ -348,13 +337,7 @@ contract GovernanceFlowTest is FactoryTestBase {
 
     vm.prank(alice);
     uint256 proposalId = tokenVoting.createProposal(
-      "Update exit queue fee to 1%",
-      actions,
-      0,
-      0,
-      0,
-      IMajorityVoting.VoteOption.None,
-      false
+      "Update exit queue fee to 1%", actions, 0, 0, 0, IMajorityVoting.VoteOption.None, false
     );
 
     // Vote

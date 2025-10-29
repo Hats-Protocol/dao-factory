@@ -403,9 +403,7 @@ contract VeSystemCriticalPathTest is FactoryTestBase {
 
     // Verify both voted
     assertEq(
-      uint256(tokenVoting.getVoteOption(proposalId, alice)),
-      uint256(IMajorityVoting.VoteOption.Yes),
-      "Alice voted"
+      uint256(tokenVoting.getVoteOption(proposalId, alice)), uint256(IMajorityVoting.VoteOption.Yes), "Alice voted"
     );
     assertEq(uint256(tokenVoting.getVoteOption(proposalId, bob)), uint256(IMajorityVoting.VoteOption.Yes), "Bob voted");
 

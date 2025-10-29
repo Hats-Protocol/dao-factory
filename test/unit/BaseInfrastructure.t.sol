@@ -19,7 +19,9 @@ contract BaseInfrastructureTest is FactoryTestBase {
 
   function test_ConfigLoadsFromJson() public {
     // Verify DAO config
-    assertEq(testConfig.dao.metadataUri, "ipfs://QmXx4T81ZDuWQBMvXYTzPbbZAQJLGd7aF9ELvt6YihCw4c", "Wrong DAO metadataUri");
+    assertEq(
+      testConfig.dao.metadataUri, "ipfs://QmXx4T81ZDuWQBMvXYTzPbbZAQJLGd7aF9ELvt6YihCw4c", "Wrong DAO metadataUri"
+    );
     assertEq(testConfig.dao.subdomain, "", "Wrong DAO subdomain");
 
     // Verify VE system config
