@@ -56,6 +56,13 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     Stage1Config stage1;
     Stage2Config stage2;
     SppPluginConfig sppPlugin;
+    // Token Voting Hats config (from main DAO)
+    address tokenVotingPluginRepo;
+    uint8 tokenVotingPluginRepoRelease;
+    uint16 tokenVotingPluginRepoBuild;
+    address governanceErc20;
+    address governanceWrappedErc20;
+    address sppPluginSetup;
   }
 
   Config config;
@@ -118,6 +125,16 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     config.sppPlugin.repositoryAddress = vm.parseJsonAddress(json, ".sppPlugin.repositoryAddress");
     config.sppPlugin.metadata = vm.parseJsonString(json, ".sppPlugin.metadata");
 
+    // Parse Token Voting Hats config (from main DAO)
+    config.tokenVotingPluginRepo = vm.parseJsonAddress(json, ".tokenVotingHats.repositoryAddress");
+    config.tokenVotingPluginRepoRelease = uint8(vm.parseJsonUint(json, ".tokenVotingHats.release"));
+    config.tokenVotingPluginRepoBuild = uint16(vm.parseJsonUint(json, ".tokenVotingHats.build"));
+    config.governanceErc20 = vm.parseJsonAddress(json, ".tokenVotingHats.governanceErc20");
+    config.governanceWrappedErc20 = vm.parseJsonAddress(json, ".tokenVotingHats.governanceWrappedErc20");
+
+    // Parse SPP plugin setup address
+    config.sppPluginSetup = vm.parseJsonAddress(json, ".sppPlugin.setupAddress");
+
     console.log("Network:", config.network);
     console.log("Version:", config.version);
     console.log("");
@@ -174,19 +191,15 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     console.log("=== Deploying Plugin Setup Contracts ===");
 
     // Use base implementations from config for TokenVoting
-    // Note: These should be deployed separately or passed in config
-    address governanceErc20 = vm.envOr("GOVERNANCE_ERC20", address(0));
-    address governanceWrappedErc20 = vm.envOr("GOVERNANCE_WRAPPED_ERC20", address(0));
+    require(config.governanceErc20 != address(0), "governanceErc20 not set in config");
+    require(config.governanceWrappedErc20 != address(0), "governanceWrappedErc20 not set in config");
 
-    require(governanceErc20 != address(0), "GOVERNANCE_ERC20 not set");
-    require(governanceWrappedErc20 != address(0), "GOVERNANCE_WRAPPED_ERC20 not set");
-
-    console.log("Using GovernanceERC20 base:", governanceErc20);
-    console.log("Using GovernanceWrappedERC20 base:", governanceWrappedErc20);
+    console.log("Using GovernanceERC20 base:", config.governanceErc20);
+    console.log("Using GovernanceWrappedERC20 base:", config.governanceWrappedErc20);
 
     // Deploy TokenVotingSetupHats
     tokenVotingSetup = new TokenVotingSetupHats(
-      GovernanceERC20(governanceErc20), GovernanceWrappedERC20(governanceWrappedErc20)
+      GovernanceERC20(config.governanceErc20), GovernanceWrappedERC20(config.governanceWrappedErc20)
     );
     console.log("TokenVotingSetupHats:", address(tokenVotingSetup));
 
@@ -194,13 +207,9 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     adminSetup = new AdminSetup();
     console.log("AdminSetup:", address(adminSetup));
 
-    // Deploy SPP Plugin Setup
-    // Note: This is a placeholder - actual SPP setup contract interface needs to be determined
-    // For now, we'll assume it's deployed separately and passed via config
-    sppPluginSetup = vm.envOr("SPP_PLUGIN_SETUP", address(0));
-    if (sppPluginSetup == address(0)) {
-      revert("SPP_PLUGIN_SETUP environment variable not set");
-    }
+    // Use SPP Plugin Setup from config
+    require(config.sppPluginSetup != address(0), "sppPluginSetup not set in config");
+    sppPluginSetup = config.sppPluginSetup;
     console.log("SPP Plugin Setup:", sppPluginSetup);
 
     console.log("");
@@ -217,15 +226,9 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
   ) internal returns (ApproverHatMinterSubDaoFactory) {
     console.log("=== Deploying ApproverHatMinterSubDaoFactory ===");
 
-    // Determine plugin repo addresses based on config
-    address tokenVotingPluginRepo =
-      vm.envOr("TOKEN_VOTING_PLUGIN_REPO", address(0)); // Can be set via env or config
-    if (tokenVotingPluginRepo == address(0)) {
-      tokenVotingPluginRepo = vm.envOr("TOKEN_VOTING_REPO_ADDRESS", address(0));
-    }
-
+    // Use plugin repo addresses from config
+    address tokenVotingPluginRepo = config.tokenVotingPluginRepo;
     address adminPluginRepo = _getAdminPluginRepo();
-
     address sppPluginRepo = config.sppPlugin.useExisting ? config.sppPlugin.repositoryAddress : address(0);
 
     DeploymentParameters memory params = DeploymentParameters({
@@ -245,9 +248,9 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
       adminPluginRepo: PluginRepo(adminPluginRepo),
       sppPluginSetup: sppPluginSetup,
       sppPluginRepo: PluginRepo(sppPluginRepo),
-      // Plugin repo version info
-      tokenVotingPluginRepoRelease: uint8(vm.envOr("TOKEN_VOTING_REPO_RELEASE", uint256(1))),
-      tokenVotingPluginRepoBuild: uint16(vm.envOr("TOKEN_VOTING_REPO_BUILD", uint256(1))),
+      // Plugin repo version info (from main DAO config)
+      tokenVotingPluginRepoRelease: config.tokenVotingPluginRepoRelease,
+      tokenVotingPluginRepoBuild: config.tokenVotingPluginRepoBuild,
       // OSx framework addresses
       osxDaoFactory: osxDaoFactory,
       pluginSetupProcessor: PluginSetupProcessor(pluginSetupProcessor),

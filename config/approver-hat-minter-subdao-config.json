@@ -31,11 +31,19 @@
     "maxAdvance": 259300,
     "voteDuration": 259200
   },
+  "tokenVotingHats": {
+    "repositoryAddress": "0x0000000000000000000000000000000000000000",
+    "release": 1,
+    "build": 1,
+    "governanceErc20": "0x0000000000000000000000000000000000000000",
+    "governanceWrappedErc20": "0x0000000000000000000000000000000000000000"
+  },
   "sppPlugin": {
     "metadata": "ipfs://QmXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
     "release": 1,
     "build": 1,
     "useExisting": true,
-    "repositoryAddress": "0x0000000000000000000000000000000000000000"
+    "repositoryAddress": "0x0000000000000000000000000000000000000000",
+    "setupAddress": "0x0000000000000000000000000000000000000000"
   }
 }
