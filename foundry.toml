@@ -36,6 +36,8 @@ remappings = [
   "@aragon/conditions/=lib/osx-capital-distributor/lib/conditions/src/",
   # Admin Plugin
   "@admin-plugin/=lib/admin-plugin/packages/contracts/src/",
+  # Staged Proposal Processor Plugin
+  "staged-proposal-processor-plugin/=lib/staged-proposal-processor-plugin/src/",
   # OpenZeppelin
   "@openzeppelin/contracts/=lib/token-voting-plugin/lib/openzeppelin-contracts/contracts/",
   "@openzeppelin/contracts-upgradeable/=lib/ve-governance/lib/openzeppelin-contracts-upgradeable/contracts/",
@@ -47,6 +49,7 @@ fs_permissions = [
   { access = "read", path = "./optimized-out" },
   { access = "read", path = "./lib/osx/packages/artifacts/src/addresses.json" },
   { access = "read", path = "./lib/admin-plugin/packages/artifacts/src/addresses.json" },
+  { access = "read", path = "./lib/staged-proposal-processor-plugin/npm-artifacts/src/addresses.json" },
   { access = "read", path = "./config/" }
 ]
 
@@ -93,8 +96,8 @@ local = "http://localhost:8545"
 mainnet = "https://mainnet.infura.io/v3/${INFURA_KEY}"
 optimism = "https://optimism-mainnet.infura.io/v3/${INFURA_KEY}"
 polygon = "https://polygon-mainnet.infura.io/v3/${INFURA_KEY}"
-sepolia = "https://sepolia.infura.io/v3/${INFURA_KEY}"
-
+# sepolia = "https://sepolia.infura.io/v3/${INFURA_KEY}"
+sepolia = "${QUICKNODE_SEPOLIA_RPC}"
 [etherscan]
 arbitrum = {key = "${ETHERSCAN_KEY}", url = "https://api.etherscan.io/v2/api?chainid=42161"}
 base = {key = "${ETHERSCAN_KEY}", url = "https://api.etherscan.io/v2/api?chainid=8453"}

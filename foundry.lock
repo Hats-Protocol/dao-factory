@@ -8,6 +8,9 @@
   "lib/forge-std": {
     "rev": "1cefc0e4e3d2a1f604c654004c90bd6701b2b5e2"
   },
+  "lib/hats-protocol": {
+    "rev": "cccb71a061cdb9095af7d11dfdb47026993d8c4e"
+  },
   "lib/osx": {
     "tag": {
       "name": "v1.4.0",
@@ -22,6 +25,12 @@
   },
   "lib/osx-commons": {
     "rev": "6627101992f2d41db2be7eee1696eb3fa81eed02"
+  },
+  "lib/staged-proposal-processor-plugin": {
+    "tag": {
+      "name": "v1.1.5",
+      "rev": "8ae72fff7afc7d13197500f75f9d8d5a3320d4af"
+    }
   },
   "lib/token-voting-plugin": {
     "branch": {

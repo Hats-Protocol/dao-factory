@@ -67,6 +67,25 @@ abstract contract DeploymentScriptHelpers is Script {
     console.log("  AdminPlugin Repo:", pluginRepo);
   }
 
+  /// @notice Gets SPP Plugin repo address for the current chain
+  function _getSppPluginRepo() internal returns (address pluginRepo) {
+    // Read addresses from SPP Plugin deployment artifacts
+    string memory root = vm.projectRoot();
+    string memory path = string.concat(
+      root, "/lib/staged-proposal-processor-plugin/npm-artifacts/src/addresses.json"
+    );
+    string memory json = vm.readFile(path);
+
+    // Map chain ID to network name
+    string memory network = _getNetworkName(block.chainid);
+
+    // Parse plugin repo address for current network
+    pluginRepo = vm.parseJsonAddress(json, string.concat(".pluginRepo.", network));
+
+    console.log("Using SPP Plugin repo for", network);
+    console.log("  SPP Plugin Repo:", pluginRepo);
+  }
+
   /// @notice Set up the deployer via their private key from the environment
   function _deployer() internal returns (address) {
     uint256 privKey = vm.envUint("PRIVATE_KEY");

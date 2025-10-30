@@ -379,4 +379,46 @@ contract VETokenVotingDaoFactory {
   function getDeployment() public view returns (Deployment memory) {
     return deployment;
   }
+
+  // ============================================================
+  // IMPORTANT: DO NOT USE THESE GETTERS WITHOUT APPROVAL
+  // ============================================================
+  // These dedicated getter functions are provided for future use.
+  // They are NOT deployed in the current test factory contract.
+  // DO NOT call these from scripts until explicitly approved
+  // by the developer. Use the temporary helper contract approach
+  // in DeployApproverHatMinterSubDao.s.sol instead.
+  // ============================================================
+
+  function getIVotesAdapter() public view returns (address) {
+    return address(deployment.veSystem.ivotesAdapter);
+  }
+
+  function getTokenVotingPluginRepo() public view returns (address) {
+    return address(deployment.tokenVotingPluginRepo);
+  }
+
+  function getProposerHatId() public view returns (uint256) {
+    return parameters.tokenVotingHats.proposerHatId;
+  }
+
+  function getVoterHatId() public view returns (uint256) {
+    return parameters.tokenVotingHats.voterHatId;
+  }
+
+  function getExecutorHatId() public view returns (uint256) {
+    return parameters.tokenVotingHats.executorHatId;
+  }
+
+  function getPluginRepoRelease() public view returns (uint8) {
+    return parameters.pluginRepoRelease;
+  }
+
+  function getPluginRepoBuild() public view returns (uint16) {
+    return parameters.pluginRepoBuild;
+  }
+
+  function getTokenVotingSetup() public view returns (TokenVotingSetupHats) {
+    return parameters.tokenVotingSetup;
+  }
 }

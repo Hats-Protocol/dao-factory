@@ -1,0 +1,49 @@
+{
+  "version": "1.0.0",
+  "network": "sepolia",
+  "dao": {
+    "metadataUri": "ipfs://QmXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "subdomain": ""
+  },
+  "mainDaoAddress": "0x126a64d234Fec51eFa80D38dA6F6d6081c4149fd",
+  "mainDaoFactoryAddress": "0x0f905a89238bbcf3071aee9dd85fdcc48ffd4df5",
+  "_comment_mainDaoDeploymentData": "TEMPORARY: These values are extracted from broadcast/DeployDao.s.sol artifacts. Replace with direct getter calls to mainDaoFactory after it is redeployed with getter functions.",
+  "mainDaoDeploymentData": {
+    "ivotesAdapter": "0xa5fa98D6b818A8C5a4BF01b401690827218B601e",
+    "tokenVotingPluginRepo": "0xe4a0dE2301e9c9A305DC5aed0348A3bB50B3e063",
+    "tokenVotingSetup": "0xd29a40d5613634f3eb5b7eb36a958542a4dbc4b6",
+    "pluginRepoRelease": 1,
+    "pluginRepoBuild": 1,
+    "proposerHatId": "0x0000071c00030000000000000000000000000000000000000000000000000000",
+    "voterHatId": "0x0000071c00030000000000000000000000000000000000000000000000000000",
+    "executorHatId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+  },
+  "adminPlugin": {
+    "adminAddress": "0x624123ec4A9f48Be7AA8a307a74381E4ea7530D4"
+  },
+  "stage1": {
+    "proposerAddress": "0x2D7473039D40d26789981c907AbE9D37bf463e4E",
+    "minAdvance": 3600,
+    "maxAdvance": 3155760000,
+    "voteDuration": 3600
+  },
+  "stage2": {
+    "tokenVotingHats": {
+      "votingMode": "Standard",
+      "supportThreshold": 0,
+      "minParticipation": 0,
+      "minDuration": 259200,
+      "minProposerVotingPower": "0"
+    },
+    "minAdvance": 259200,
+    "maxAdvance": 3155760000,
+    "voteDuration": 259200
+  },
+  "_comment_sppPlugin": "SPP plugin repository address is fetched programmatically from staged-proposal-processor-plugin/npm-artifacts/src/addresses.json. Setup contract is deployed by the script.",
+  "sppPlugin": {
+    "metadata": "",
+    "release": 1,
+    "build": 1,
+    "useExisting": true
+  }
+}
