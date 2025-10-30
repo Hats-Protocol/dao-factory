@@ -1,26 +1,26 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import {DAO} from "@aragon/osx/core/dao/DAO.sol";
-import {DAOFactory} from "@aragon/osx/framework/dao/DAOFactory.sol";
-import {PluginSetupProcessor} from "@aragon/osx/framework/plugin/setup/PluginSetupProcessor.sol";
-import {PluginRepoFactory} from "@aragon/osx/framework/plugin/repo/PluginRepoFactory.sol";
-import {PluginRepo} from "@aragon/osx/framework/plugin/repo/PluginRepo.sol";
-import {PermissionManager} from "@aragon/osx/core/permission/PermissionManager.sol";
-import {PermissionLib} from "@aragon/osx-commons-contracts/src/permission/PermissionLib.sol";
-import {Action} from "@aragon/osx-commons-contracts/src/executors/IExecutor.sol";
-import {IPluginSetup} from "@aragon/osx-commons-contracts/src/plugin/setup/IPluginSetup.sol";
-import {hashHelpers, PluginSetupRef} from "@aragon/osx/framework/plugin/setup/PluginSetupProcessorHelpers.sol";
-import {IPlugin} from "@aragon/osx-commons-contracts/src/plugin/IPlugin.sol";
+import { DAO } from "@aragon/osx/core/dao/DAO.sol";
+import { DAOFactory } from "@aragon/osx/framework/dao/DAOFactory.sol";
+import { PluginSetupProcessor } from "@aragon/osx/framework/plugin/setup/PluginSetupProcessor.sol";
+import { PluginRepoFactory } from "@aragon/osx/framework/plugin/repo/PluginRepoFactory.sol";
+import { PluginRepo } from "@aragon/osx/framework/plugin/repo/PluginRepo.sol";
+import { PermissionManager } from "@aragon/osx/core/permission/PermissionManager.sol";
+import { PermissionLib } from "@aragon/osx-commons-contracts/src/permission/PermissionLib.sol";
+import { Action } from "@aragon/osx-commons-contracts/src/executors/IExecutor.sol";
+import { IPluginSetup } from "@aragon/osx-commons-contracts/src/plugin/setup/IPluginSetup.sol";
+import { hashHelpers, PluginSetupRef } from "@aragon/osx/framework/plugin/setup/PluginSetupProcessorHelpers.sol";
+import { IPlugin } from "@aragon/osx-commons-contracts/src/plugin/IPlugin.sol";
 
-import {TokenVotingSetupHats} from "@token-voting-hats/TokenVotingSetupHats.sol";
-import {TokenVotingHats} from "@token-voting-hats/TokenVotingHats.sol";
-import {AdminSetup} from "@admin-plugin/AdminSetup.sol";
-import {Admin} from "@admin-plugin/Admin.sol";
-import {MajorityVotingBase} from "@token-voting-hats/base/MajorityVotingBase.sol";
-import {GovernanceERC20} from "@token-voting-hats/erc20/GovernanceERC20.sol";
-import {StagedProposalProcessor} from "staged-proposal-processor-plugin/StagedProposalProcessor.sol";
-import {RuledCondition} from "@aragon/osx-commons-contracts/src/permission/condition/extensions/RuledCondition.sol";
+import { TokenVotingSetupHats } from "@token-voting-hats/TokenVotingSetupHats.sol";
+import { TokenVotingHats } from "@token-voting-hats/TokenVotingHats.sol";
+import { AdminSetup } from "@admin-plugin/AdminSetup.sol";
+import { Admin } from "@admin-plugin/Admin.sol";
+import { MajorityVotingBase } from "@token-voting-hats/base/MajorityVotingBase.sol";
+import { GovernanceERC20 } from "@token-voting-hats/erc20/GovernanceERC20.sol";
+import { StagedProposalProcessor } from "staged-proposal-processor-plugin/StagedProposalProcessor.sol";
+import { RuledCondition } from "@aragon/osx-commons-contracts/src/permission/condition/extensions/RuledCondition.sol";
 
 /// @notice DAO configuration parameters
 struct DaoConfig {
@@ -111,7 +111,8 @@ struct Deployment {
   PluginRepo sppPluginRepo;
 }
 
-/// @notice A singleton contract designed to run the deployment once and become a read-only store of the contracts deployed
+/// @notice A singleton contract designed to run the deployment once and become a read-only store of the contracts
+/// deployed
 contract ApproverHatMinterSubDaoFactory {
   address public immutable deployer;
 
@@ -207,15 +208,15 @@ contract ApproverHatMinterSubDaoFactory {
 
     // Encode installation parameters: admin address and target config
     bytes memory installData = abi.encode(
-      parameters.adminPlugin.adminAddress, IPlugin.TargetConfig({target: address(dao), operation: IPlugin.Operation.Call})
+      parameters.adminPlugin.adminAddress,
+      IPlugin.TargetConfig({ target: address(dao), operation: IPlugin.Operation.Call })
     );
 
     (address pluginAddress, IPluginSetup.PreparedSetupData memory preparedSetupData) = parameters.pluginSetupProcessor
       .prepareInstallation(
         address(dao),
         PluginSetupProcessor.PrepareInstallationParams({
-          pluginSetupRef: PluginSetupRef(repoTag, pluginRepo),
-          data: installData
+          pluginSetupRef: PluginSetupRef(repoTag, pluginRepo), data: installData
         })
       );
 
@@ -248,33 +249,35 @@ contract ApproverHatMinterSubDaoFactory {
     PluginRepo.Tag memory repoTag =
       PluginRepo.Tag(parameters.tokenVotingPluginRepoRelease, parameters.tokenVotingPluginRepoBuild);
 
-    bytes memory installData = parameters.tokenVotingSetup.encodeInstallationParametersHats(
-      MajorityVotingBase.VotingSettings({
-        votingMode: parameters.stage2.tokenVotingHats.votingMode,
-        supportThreshold: parameters.stage2.tokenVotingHats.supportThreshold,
-        minParticipation: parameters.stage2.tokenVotingHats.minParticipation,
-        minDuration: parameters.stage2.tokenVotingHats.minDuration,
-        minProposerVotingPower: parameters.stage2.tokenVotingHats.minProposerVotingPower
-      }),
-      TokenVotingSetupHats.TokenSettings({addr: ivotesAdapter, name: "", symbol: ""}),
-      GovernanceERC20.MintSettings({receivers: new address[](0), amounts: new uint256[](0), ensureDelegationOnMint: false}),
-      IPlugin.TargetConfig({target: address(dao), operation: IPlugin.Operation.Call}),
-      0,
-      bytes(""),
-      new address[](0),
-      TokenVotingSetupHats.HatsConfig({
-        proposerHatId: parameters.stage2.tokenVotingHats.proposerHatId,
-        voterHatId: parameters.stage2.tokenVotingHats.voterHatId,
-        executorHatId: parameters.stage2.tokenVotingHats.executorHatId
-      })
-    );
+    bytes memory installData = parameters.tokenVotingSetup
+      .encodeInstallationParametersHats(
+        MajorityVotingBase.VotingSettings({
+          votingMode: parameters.stage2.tokenVotingHats.votingMode,
+          supportThreshold: parameters.stage2.tokenVotingHats.supportThreshold,
+          minParticipation: parameters.stage2.tokenVotingHats.minParticipation,
+          minDuration: parameters.stage2.tokenVotingHats.minDuration,
+          minProposerVotingPower: parameters.stage2.tokenVotingHats.minProposerVotingPower
+        }),
+        TokenVotingSetupHats.TokenSettings({ addr: ivotesAdapter, name: "", symbol: "" }),
+        GovernanceERC20.MintSettings({
+          receivers: new address[](0), amounts: new uint256[](0), ensureDelegationOnMint: false
+        }),
+        IPlugin.TargetConfig({ target: address(dao), operation: IPlugin.Operation.Call }),
+        0,
+        bytes(""),
+        new address[](0),
+        TokenVotingSetupHats.HatsConfig({
+          proposerHatId: parameters.stage2.tokenVotingHats.proposerHatId,
+          voterHatId: parameters.stage2.tokenVotingHats.voterHatId,
+          executorHatId: parameters.stage2.tokenVotingHats.executorHatId
+        })
+      );
 
     (address pluginAddress, IPluginSetup.PreparedSetupData memory preparedSetupData) = parameters.pluginSetupProcessor
       .prepareInstallation(
         address(dao),
         PluginSetupProcessor.PrepareInstallationParams({
-          pluginSetupRef: PluginSetupRef(repoTag, pluginRepo),
-          data: installData
+          pluginSetupRef: PluginSetupRef(repoTag, pluginRepo), data: installData
         })
       );
 
@@ -300,11 +303,7 @@ contract ApproverHatMinterSubDaoFactory {
     if (address(sppPluginRepo) == address(0)) {
       sppPluginRepo = PluginRepoFactory(parameters.pluginRepoFactory)
         .createPluginRepoWithFirstVersion(
-          "staged-proposal-processor-subdao",
-          parameters.sppPluginSetup,
-          address(dao),
-          " ",
-          " "
+          "staged-proposal-processor-subdao", parameters.sppPluginSetup, address(dao), " ", " "
         );
     }
 
@@ -319,8 +318,7 @@ contract ApproverHatMinterSubDaoFactory {
       .prepareInstallation(
         address(dao),
         PluginSetupProcessor.PrepareInstallationParams({
-          pluginSetupRef: PluginSetupRef(repoTag, sppPluginRepo),
-          data: installData
+          pluginSetupRef: PluginSetupRef(repoTag, sppPluginRepo), data: installData
         })
       );
 
@@ -396,7 +394,7 @@ contract ApproverHatMinterSubDaoFactory {
 
     // Target config for executing actions on the DAO
     IPlugin.TargetConfig memory targetConfig =
-      IPlugin.TargetConfig({target: address(deployment.dao), operation: IPlugin.Operation.Call});
+      IPlugin.TargetConfig({ target: address(deployment.dao), operation: IPlugin.Operation.Call });
 
     // Encode according to StagedProposalProcessorSetup interface
     return abi.encode(bytes(parameters.sppPlugin.metadata), stages, rules, targetConfig);

@@ -71,9 +71,7 @@ abstract contract DeploymentScriptHelpers is Script {
   function _getSppPluginRepo() internal returns (address pluginRepo) {
     // Read addresses from SPP Plugin deployment artifacts
     string memory root = vm.projectRoot();
-    string memory path = string.concat(
-      root, "/lib/staged-proposal-processor-plugin/npm-artifacts/src/addresses.json"
-    );
+    string memory path = string.concat(root, "/lib/staged-proposal-processor-plugin/npm-artifacts/src/addresses.json");
     string memory json = vm.readFile(path);
 
     // Map chain ID to network name

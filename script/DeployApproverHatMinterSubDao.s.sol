@@ -13,23 +13,23 @@ import {
   TokenVotingHatsPluginConfig,
   SppPluginConfig
 } from "../src/ApproverHatMinterSubDaoFactory.sol";
-import {DeploymentScriptHelpers} from "./DeploymentHelpers.sol";
+import { DeploymentScriptHelpers } from "./DeploymentHelpers.sol";
 
-import {TokenVotingSetupHats} from "@token-voting-hats/TokenVotingSetupHats.sol";
-import {AdminSetup} from "@admin-plugin/AdminSetup.sol";
-import {MajorityVotingBase} from "@token-voting-hats/base/MajorityVotingBase.sol";
-import {GovernanceERC20} from "@token-voting-hats/erc20/GovernanceERC20.sol";
-import {GovernanceWrappedERC20} from "@token-voting-hats/erc20/GovernanceWrappedERC20.sol";
-import {PluginSetupProcessor} from "@aragon/osx/framework/plugin/setup/PluginSetupProcessor.sol";
-import {PluginRepoFactory} from "@aragon/osx/framework/plugin/repo/PluginRepoFactory.sol";
-import {PluginRepo} from "@aragon/osx/framework/plugin/repo/PluginRepo.sol";
+import { TokenVotingSetupHats } from "@token-voting-hats/TokenVotingSetupHats.sol";
+import { AdminSetup } from "@admin-plugin/AdminSetup.sol";
+import { MajorityVotingBase } from "@token-voting-hats/base/MajorityVotingBase.sol";
+import { GovernanceERC20 } from "@token-voting-hats/erc20/GovernanceERC20.sol";
+import { GovernanceWrappedERC20 } from "@token-voting-hats/erc20/GovernanceWrappedERC20.sol";
+import { PluginSetupProcessor } from "@aragon/osx/framework/plugin/setup/PluginSetupProcessor.sol";
+import { PluginRepoFactory } from "@aragon/osx/framework/plugin/repo/PluginRepoFactory.sol";
+import { PluginRepo } from "@aragon/osx/framework/plugin/repo/PluginRepo.sol";
 
-import {VETokenVotingDaoFactory} from "../src/VETokenVotingDaoFactory.sol";
+import { VETokenVotingDaoFactory } from "../src/VETokenVotingDaoFactory.sol";
 
 /// @notice Deployment script for creating a new SubDAO with Admin, TokenVotingHats, and SPP plugins
 /// @dev Run with: forge script script/DeployApproverHatMinterSubDao.s.sol --rpc-url sepolia --broadcast --verify
-/// @dev Configuration loaded from JSON file specified by CONFIG_PATH env var (default: config/approver-hat-minter-subdao-config.json)
-/// @dev Requires PRIVATE_KEY environment variable to be set
+/// @dev Configuration loaded from JSON file specified by CONFIG_PATH env var (default:
+/// config/approver-hat-minter-subdao-config.json) @dev Requires PRIVATE_KEY environment variable to be set
 contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers {
   struct TokenVotingHatsScriptConfig {
     string votingMode;
@@ -110,12 +110,10 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
 
     // TEMPORARY: Parse main DAO deployment data from config
     // Once main DAO factory is redeployed with getter functions, replace this with direct on-chain queries
-    config.mainDaoDeploymentData.ivotesAdapter =
-      vm.parseJsonAddress(json, ".mainDaoDeploymentData.ivotesAdapter");
+    config.mainDaoDeploymentData.ivotesAdapter = vm.parseJsonAddress(json, ".mainDaoDeploymentData.ivotesAdapter");
     config.mainDaoDeploymentData.tokenVotingPluginRepo =
       vm.parseJsonAddress(json, ".mainDaoDeploymentData.tokenVotingPluginRepo");
-    config.mainDaoDeploymentData.tokenVotingSetup =
-      vm.parseJsonAddress(json, ".mainDaoDeploymentData.tokenVotingSetup");
+    config.mainDaoDeploymentData.tokenVotingSetup = vm.parseJsonAddress(json, ".mainDaoDeploymentData.tokenVotingSetup");
     config.mainDaoDeploymentData.pluginRepoRelease =
       uint8(vm.parseJsonUint(json, ".mainDaoDeploymentData.pluginRepoRelease"));
     config.mainDaoDeploymentData.pluginRepoBuild =
@@ -140,8 +138,7 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
       uint32(vm.parseJsonUint(json, ".stage2.tokenVotingHats.supportThreshold"));
     config.stage2.tokenVotingHats.minParticipation =
       uint32(vm.parseJsonUint(json, ".stage2.tokenVotingHats.minParticipation"));
-    config.stage2.tokenVotingHats.minDuration =
-      uint64(vm.parseJsonUint(json, ".stage2.tokenVotingHats.minDuration"));
+    config.stage2.tokenVotingHats.minDuration = uint64(vm.parseJsonUint(json, ".stage2.tokenVotingHats.minDuration"));
     config.stage2.tokenVotingHats.minProposerVotingPower =
       vm.parseJsonUint(json, ".stage2.tokenVotingHats.minProposerVotingPower");
     // Note: Hat IDs are loaded from mainDaoDeploymentData section above
@@ -251,11 +248,7 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
 
     // ===== STEP 1 & 2: Deploy Plugin Setups and Factory =====
     factory = _deployPluginSetupsAndFactory(
-      tokenVotingSetup,
-      ivotesAdapter,
-      tokenVotingPluginRepo,
-      pluginRepoRelease,
-      pluginRepoBuild
+      tokenVotingSetup, ivotesAdapter, tokenVotingPluginRepo, pluginRepoRelease, pluginRepoBuild
     );
 
     // ===== STEP 3: Deploy the SubDAO =====
@@ -266,7 +259,6 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
 
     return factory;
   }
-
 
   /// @notice Run script with broadcasting for actual deployment
   function run() external {
@@ -324,9 +316,8 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     console.log("Using GovernanceWrappedERC20 base from main DAO:", governanceWrappedErc20);
 
     // Deploy TokenVotingSetupHats
-    tokenVotingSetup = new TokenVotingSetupHats(
-      GovernanceERC20(governanceErc20), GovernanceWrappedERC20(governanceWrappedErc20)
-    );
+    tokenVotingSetup =
+      new TokenVotingSetupHats(GovernanceERC20(governanceErc20), GovernanceWrappedERC20(governanceWrappedErc20));
     console.log("TokenVotingSetupHats:", address(tokenVotingSetup));
 
     // Deploy AdminSetup
@@ -335,10 +326,8 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
 
     // Get SPP Plugin Setup from existing repo (don't deploy new - it's too large!)
     address sppPluginRepo = _getSppPluginRepo();
-    PluginRepo.Tag memory sppRepoTag = PluginRepo.Tag({
-      release: uint8(config.sppPlugin.release),
-      build: uint16(config.sppPlugin.build)
-    });
+    PluginRepo.Tag memory sppRepoTag =
+      PluginRepo.Tag({ release: uint8(config.sppPlugin.release), build: uint16(config.sppPlugin.build) });
     PluginRepo.Version memory sppVersion = PluginRepo(sppPluginRepo).getVersion(sppRepoTag);
     sppPluginSetup = sppVersion.pluginSetup;
     console.log("SPP Plugin Setup:", sppPluginSetup);
@@ -396,7 +385,6 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
 
     return factory;
   }
-
 
   /// @notice Deploys the SubDAO via factory.deployOnce()
   function _deploySubDao(ApproverHatMinterSubDaoFactory factory) internal {
