@@ -1,0 +1,41 @@
+{
+  "version": "1.0.0",
+  "network": "sepolia",
+  "dao": {
+    "metadataUri": "ipfs://QmXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "subdomain": "approver-hat-minter-subdao"
+  },
+  "mainDaoAddress": "0x0000000000000000000000000000000000000000",
+  "mainDaoFactoryAddress": "0x0000000000000000000000000000000000000000",
+  "adminPlugin": {
+    "adminAddress": "0x0000000000000000000000000000000000000000"
+  },
+  "stage1": {
+    "proposerAddress": "0x0000000000000000000000000000000000000000",
+    "minAdvance": 3600,
+    "maxAdvance": 3700,
+    "voteDuration": 3600
+  },
+  "stage2": {
+    "tokenVotingHats": {
+      "votingMode": "Standard",
+      "supportThreshold": 0,
+      "minParticipation": 0,
+      "minDuration": 259200,
+      "minProposerVotingPower": "0",
+      "proposerHatId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "voterHatId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "executorHatId": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    "minAdvance": 259200,
+    "maxAdvance": 259300,
+    "voteDuration": 259200
+  },
+  "sppPlugin": {
+    "metadata": "ipfs://QmXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "release": 1,
+    "build": 1,
+    "useExisting": true,
+    "repositoryAddress": "0x0000000000000000000000000000000000000000"
+  }
+}
