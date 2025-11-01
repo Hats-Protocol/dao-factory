@@ -417,6 +417,10 @@ contract ApproverHatMinterSubDaoFactory {
     // This ensures only the designated proposer can create proposals
     dao.grant(sppPlugin, parameters.stage1.proposerAddress, CREATE_PROPOSAL_PERMISSION_ID);
 
+    // Step 3: Grant SPP permission to create proposals in TokenVotingHats for Stage 2
+    // This allows SPP to create sub-proposals when advancing to the voting stage
+    dao.grant(address(deployment.tokenVotingPlugin), sppPlugin, CREATE_PROPOSAL_PERMISSION_ID);
+
     // Grant EXECUTE_PROPOSAL permission to SPP plugin so it can execute on the DAO
     dao.grant(address(dao), sppPlugin, EXECUTE_PROPOSAL_PERMISSION_ID);
   }

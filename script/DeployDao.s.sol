@@ -98,7 +98,7 @@ contract DeployDaoFromConfigScript is DeploymentScriptHelpers {
     string memory path = string.concat(root, "/", configPath);
     string memory json = vm.readFile(path);
 
-    console.log("Loading config from:", path);
+    _log("Loading config from:", path);
 
     // Parse root level fields
     config.version = vm.parseJsonString(json, ".version");
@@ -143,9 +143,9 @@ contract DeployDaoFromConfigScript is DeploymentScriptHelpers {
     // Parse admin plugin config
     config.adminPlugin.adminAddress = vm.parseJsonAddress(json, ".adminPlugin.adminAddress");
 
-    console.log("Network:", config.network);
-    console.log("Version:", config.version);
-    console.log("");
+    _log("Network:", config.network);
+    _log("Version:", config.version);
+    _log("");
   }
 
   /// @notice Converts string voting mode to enum
@@ -185,6 +185,7 @@ contract DeployDaoFromConfigScript is DeploymentScriptHelpers {
 
   /// @notice Run script with broadcasting for actual deployment
   function run() external {
+    verbose = true;
     vm.startBroadcast(_deployer());
     execute();
     vm.stopBroadcast();
@@ -195,14 +196,14 @@ contract DeployDaoFromConfigScript is DeploymentScriptHelpers {
     internal
     returns (VESystemSetup veSystemSetup, TokenVotingSetupHats tokenVotingSetup, AdminSetup adminSetup)
   {
-    console.log("=== Deploying VE Base Implementations ===");
+    _log("=== Deploying VE Base Implementations ===");
 
     // Deploy VE system base implementations (reused across all DAOs)
     Clock clockBase = new Clock();
-    console.log("Clock base:", address(clockBase));
+    _log("Clock base:", address(clockBase));
 
     VotingEscrow escrowBase = new VotingEscrow();
-    console.log("VotingEscrow base:", address(escrowBase));
+    _log("VotingEscrow base:", address(escrowBase));
 
     // Deploy Curve with curve parameters from config (baked into implementation)
     Curve curveBase = new Curve(
@@ -213,13 +214,13 @@ contract DeployDaoFromConfigScript is DeploymentScriptHelpers {
       ],
       config.votingPowerCurve.maxEpochs
     );
-    console.log("Curve base:", address(curveBase));
+    _log("Curve base:", address(curveBase));
 
     ExitQueue queueBase = new ExitQueue();
-    console.log("ExitQueue base:", address(queueBase));
+    _log("ExitQueue base:", address(queueBase));
 
     Lock lockBase = new Lock();
-    console.log("Lock base:", address(lockBase));
+    _log("Lock base:", address(lockBase));
 
     // Deploy SelfDelegationEscrowIVotesAdapter with curve parameters from config (baked into implementation)
     SelfDelegationEscrowIVotesAdapter ivotesAdapterBase = new SelfDelegationEscrowIVotesAdapter(
@@ -230,14 +231,14 @@ contract DeployDaoFromConfigScript is DeploymentScriptHelpers {
       ],
       config.votingPowerCurve.maxEpochs
     );
-    console.log("SelfDelegationEscrowIVotesAdapter base:", address(ivotesAdapterBase));
+    _log("SelfDelegationEscrowIVotesAdapter base:", address(ivotesAdapterBase));
 
     // Deploy AddressGaugeVoter base
     AddressGaugeVoter voterBase = new AddressGaugeVoter();
-    console.log("AddressGaugeVoter base:", address(voterBase));
+    _log("AddressGaugeVoter base:", address(voterBase));
 
-    console.log("");
-    console.log("=== Deploying Plugin Setup Contracts ===");
+    _log("");
+    _log("=== Deploying Plugin Setup Contracts ===");
 
     // Deploy VESystemSetup with all base implementation addresses
     veSystemSetup = new VESystemSetup(
@@ -249,24 +250,24 @@ contract DeployDaoFromConfigScript is DeploymentScriptHelpers {
       address(ivotesAdapterBase),
       address(voterBase)
     );
-    console.log("VESystemSetup:", address(veSystemSetup));
+    _log("VESystemSetup:", address(veSystemSetup));
 
     // Use base implementations from config for TokenVoting
-    console.log("Using GovernanceERC20 base:", config.tokenVotingHats.governanceErc20);
-    console.log("Using GovernanceWrappedERC20 base:", config.tokenVotingHats.governanceWrappedErc20);
+    _log("Using GovernanceERC20 base:", config.tokenVotingHats.governanceErc20);
+    _log("Using GovernanceWrappedERC20 base:", config.tokenVotingHats.governanceWrappedErc20);
 
     // Deploy TokenVotingSetupHats
     tokenVotingSetup = new TokenVotingSetupHats(
       GovernanceERC20(config.tokenVotingHats.governanceErc20),
       GovernanceWrappedERC20(config.tokenVotingHats.governanceWrappedErc20)
     );
-    console.log("TokenVotingSetupHats:", address(tokenVotingSetup));
+    _log("TokenVotingSetupHats:", address(tokenVotingSetup));
 
     // Deploy AdminSetup
     adminSetup = new AdminSetup();
-    console.log("AdminSetup:", address(adminSetup));
+    _log("AdminSetup:", address(adminSetup));
 
-    console.log("");
+    _log("");
   }
 
   /// @notice Deploys the VETokenVotingDaoFactory with all parameters
@@ -278,7 +279,7 @@ contract DeployDaoFromConfigScript is DeploymentScriptHelpers {
     address pluginSetupProcessor,
     address pluginRepoFactory
   ) internal returns (VETokenVotingDaoFactory) {
-    console.log("=== Deploying VETokenVotingDaoFactory ===");
+    _log("=== Deploying VETokenVotingDaoFactory ===");
 
     // Determine plugin repo addresses based on config
     address tokenVotingPluginRepo =
@@ -337,46 +338,46 @@ contract DeployDaoFromConfigScript is DeploymentScriptHelpers {
     });
 
     VETokenVotingDaoFactory factory = new VETokenVotingDaoFactory(params);
-    console.log("VETokenVotingDaoFactory:", address(factory));
-    console.log("");
+    _log("VETokenVotingDaoFactory:", address(factory));
+    _log("");
 
     return factory;
   }
 
   /// @notice Deploys the DAO via factory.deployOnce()
   function _deployDao(VETokenVotingDaoFactory factory) internal {
-    console.log("=== Deploying DAO ===");
+    _log("=== Deploying DAO ===");
 
     factory.deployOnce();
 
-    console.log("DAO deployed successfully!");
-    console.log("");
+    _log("DAO deployed successfully!");
+    _log("");
   }
 
   /// @notice Logs all deployment addresses
   function _logDeployment(VETokenVotingDaoFactory factory) internal view {
-    console.log("=== Deployment Artifacts ===");
-    console.log("Factory:", address(factory));
-    console.log("");
+    _log("=== Deployment Artifacts ===");
+    _log("Factory:", address(factory));
+    _log("");
 
     // Retrieve deployment from factory
     Deployment memory deployment = factory.getDeployment();
 
-    console.log("DAO:", address(deployment.dao));
-    console.log("");
-    console.log("VE System:");
-    console.log("  VotingEscrow:", address(deployment.veSystem.votingEscrow));
-    console.log("  Clock:", address(deployment.veSystem.clock));
-    console.log("  Curve:", address(deployment.veSystem.curve));
-    console.log("  ExitQueue:", address(deployment.veSystem.exitQueue));
-    console.log("  NFT Lock:", address(deployment.veSystem.nftLock));
-    console.log("  IVotesAdapter:", address(deployment.veSystem.ivotesAdapter));
-    console.log("  AddressGaugeVoter:", address(deployment.veSystem.voter));
-    console.log("");
-    console.log("Plugins:");
-    console.log("  TokenVotingHats:", address(deployment.tokenVotingPlugin));
-    console.log("  TokenVotingHats Repo:", address(deployment.tokenVotingPluginRepo));
-    console.log("  Admin:", address(deployment.adminPlugin));
-    console.log("  Admin Repo:", address(deployment.adminPluginRepo));
+    _log("DAO:", address(deployment.dao));
+    _log("");
+    _log("VE System:");
+    _log("  VotingEscrow:", address(deployment.veSystem.votingEscrow));
+    _log("  Clock:", address(deployment.veSystem.clock));
+    _log("  Curve:", address(deployment.veSystem.curve));
+    _log("  ExitQueue:", address(deployment.veSystem.exitQueue));
+    _log("  NFT Lock:", address(deployment.veSystem.nftLock));
+    _log("  IVotesAdapter:", address(deployment.veSystem.ivotesAdapter));
+    _log("  AddressGaugeVoter:", address(deployment.veSystem.voter));
+    _log("");
+    _log("Plugins:");
+    _log("  TokenVotingHats:", address(deployment.tokenVotingPlugin));
+    _log("  TokenVotingHats Repo:", address(deployment.tokenVotingPluginRepo));
+    _log("  Admin:", address(deployment.adminPlugin));
+    _log("  Admin Repo:", address(deployment.adminPluginRepo));
   }
 }

@@ -48,28 +48,12 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     address governanceWrappedErc20;
   }
 
-  /// @notice TEMPORARY: Main DAO deployment data loaded from config
-  /// @dev These values are extracted from broadcast artifacts to avoid on-chain queries
-  /// @dev Once main DAO factory is redeployed with getter functions, this should be removed
-  /// @dev and replaced with direct on-chain calls to mainDaoFactory.getX() methods
-  struct MainDaoDeploymentData {
-    address ivotesAdapter;
-    address tokenVotingPluginRepo;
-    address tokenVotingSetup;
-    uint8 pluginRepoRelease;
-    uint16 pluginRepoBuild;
-    uint256 proposerHatId;
-    uint256 voterHatId;
-    uint256 executorHatId;
-  }
-
   struct Config {
     string version;
     string network;
     DaoConfig dao;
     address mainDaoAddress;
     address mainDaoFactoryAddress;
-    MainDaoDeploymentData mainDaoDeploymentData; // TEMPORARY: loaded from config
     AdminPluginConfig adminPlugin;
     Stage1Config stage1;
     Stage2Config stage2;
@@ -94,7 +78,7 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     string memory path = string.concat(root, "/", configPath);
     string memory json = vm.readFile(path);
 
-    console.log("Loading config from:", path);
+    _log("Loading config from:", path);
 
     // Parse root level fields
     config.version = vm.parseJsonString(json, ".version");
@@ -107,20 +91,6 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     // Parse main DAO addresses
     config.mainDaoAddress = vm.parseJsonAddress(json, ".mainDaoAddress");
     config.mainDaoFactoryAddress = vm.parseJsonAddress(json, ".mainDaoFactoryAddress");
-
-    // TEMPORARY: Parse main DAO deployment data from config
-    // Once main DAO factory is redeployed with getter functions, replace this with direct on-chain queries
-    config.mainDaoDeploymentData.ivotesAdapter = vm.parseJsonAddress(json, ".mainDaoDeploymentData.ivotesAdapter");
-    config.mainDaoDeploymentData.tokenVotingPluginRepo =
-      vm.parseJsonAddress(json, ".mainDaoDeploymentData.tokenVotingPluginRepo");
-    config.mainDaoDeploymentData.tokenVotingSetup = vm.parseJsonAddress(json, ".mainDaoDeploymentData.tokenVotingSetup");
-    config.mainDaoDeploymentData.pluginRepoRelease =
-      uint8(vm.parseJsonUint(json, ".mainDaoDeploymentData.pluginRepoRelease"));
-    config.mainDaoDeploymentData.pluginRepoBuild =
-      uint16(vm.parseJsonUint(json, ".mainDaoDeploymentData.pluginRepoBuild"));
-    config.mainDaoDeploymentData.proposerHatId = vm.parseJsonUint(json, ".mainDaoDeploymentData.proposerHatId");
-    config.mainDaoDeploymentData.voterHatId = vm.parseJsonUint(json, ".mainDaoDeploymentData.voterHatId");
-    config.mainDaoDeploymentData.executorHatId = vm.parseJsonUint(json, ".mainDaoDeploymentData.executorHatId");
 
     // Parse admin plugin config
     config.adminPlugin.adminAddress = vm.parseJsonAddress(json, ".adminPlugin.adminAddress");
@@ -141,7 +111,7 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     config.stage2.tokenVotingHats.minDuration = uint64(vm.parseJsonUint(json, ".stage2.tokenVotingHats.minDuration"));
     config.stage2.tokenVotingHats.minProposerVotingPower =
       vm.parseJsonUint(json, ".stage2.tokenVotingHats.minProposerVotingPower");
-    // Note: Hat IDs are loaded from mainDaoDeploymentData section above
+    // Note: Hat IDs are queried from main DAO factory via getter functions in _getMainDaoFactoryData()
     config.stage2.minAdvance = uint48(vm.parseJsonUint(json, ".stage2.minAdvance"));
     config.stage2.maxAdvance = uint48(vm.parseJsonUint(json, ".stage2.maxAdvance"));
     config.stage2.voteDuration = uint48(vm.parseJsonUint(json, ".stage2.voteDuration"));
@@ -155,9 +125,9 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     // Note: SPP plugin setup is deployed in _deployPluginSetups(), not read from config
     // Note: SPP plugin repo address is fetched programmatically in _deployFactory()
 
-    console.log("Network:", config.network);
-    console.log("Version:", config.version);
-    console.log("");
+    _log("Network:", config.network);
+    _log("Version:", config.version);
+    _log("");
   }
 
   /// @notice Converts string voting mode to enum
@@ -169,14 +139,7 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     revert(string.concat("Invalid voting mode: ", mode));
   }
 
-  /// @notice TEMPORARY: Load main DAO deployment data from config
-  /// @dev This function reads from config instead of querying on-chain to avoid Foundry fork bugs
-  /// @dev Once main DAO factory is redeployed with dedicated getter functions, replace this with:
-  /// @dev   ivotesAdapter = mainFactory.getIVotesAdapter();
-  /// @dev   tokenVotingPluginRepo = mainFactory.getTokenVotingPluginRepo();
-  /// @dev   tokenVotingSetup = mainFactory.getTokenVotingSetup();
-  /// @dev   proposerHatId = mainFactory.getProposerHatId();
-  /// @dev   etc.
+  /// @notice Load main DAO deployment data from the deployed factory via getter functions
   /// @return ivotesAdapter The IVotesAdapter address
   /// @return tokenVotingPluginRepo The TokenVoting plugin repo address
   /// @return proposerHatId The proposer hat ID
@@ -199,28 +162,46 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
       TokenVotingSetupHats tokenVotingSetup
     )
   {
-    console.log("Loading main DAO deployment data from config...");
+    _log("Loading main DAO deployment data from factory getter functions...");
 
-    // TEMPORARY: Load all values from config instead of querying on-chain
-    // Replace with direct getter calls after main factory redeployment
-    ivotesAdapter = config.mainDaoDeploymentData.ivotesAdapter;
-    tokenVotingPluginRepo = config.mainDaoDeploymentData.tokenVotingPluginRepo;
-    proposerHatId = config.mainDaoDeploymentData.proposerHatId;
-    voterHatId = config.mainDaoDeploymentData.voterHatId;
-    executorHatId = config.mainDaoDeploymentData.executorHatId;
-    pluginRepoRelease = config.mainDaoDeploymentData.pluginRepoRelease;
-    pluginRepoBuild = config.mainDaoDeploymentData.pluginRepoBuild;
-    tokenVotingSetup = TokenVotingSetupHats(config.mainDaoDeploymentData.tokenVotingSetup);
+    // Get the main DAO factory instance
+    VETokenVotingDaoFactory mainFactory = VETokenVotingDaoFactory(config.mainDaoFactoryAddress);
+
+    // Query via getter functions (no more config!)
+    ivotesAdapter = mainFactory.getIVotesAdapter();
+    tokenVotingPluginRepo = mainFactory.getTokenVotingPluginRepo();
+    tokenVotingSetup = mainFactory.getTokenVotingSetup();
+    pluginRepoRelease = mainFactory.getPluginRepoRelease();
+    pluginRepoBuild = mainFactory.getPluginRepoBuild();
+    proposerHatId = mainFactory.getProposerHatId();
+    voterHatId = mainFactory.getVoterHatId();
+    executorHatId = mainFactory.getExecutorHatId();
   }
 
   /// @notice Execute the full deployment (called by run() or from tests)
+  /// @param mainDaoFactoryOverride Optional main DAO factory address to use instead of config value
+  /// @param mainDaoAddressOverride Optional main DAO address to use instead of config value
+  /// @dev If address(0), uses mainDaoFactoryAddress/mainDaoAddress from config; otherwise uses provided addresses
+  /// @dev Tests can pass freshly deployed addresses; CLI calls execute(address(0), address(0)) to use config
   /// @return factory The deployed factory contract
-  function execute() public returns (ApproverHatMinterSubDaoFactory factory) {
+  function execute(address mainDaoFactoryOverride, address mainDaoAddressOverride)
+    public
+    returns (ApproverHatMinterSubDaoFactory factory)
+  {
     // Load configuration from JSON
     _loadConfig();
 
-    // TEMPORARY: Load main DAO factory data from config
-    // Once main factory is redeployed with getters, replace with on-chain queries
+    // Override config if mainDaoFactoryOverride is provided
+    if (mainDaoFactoryOverride != address(0)) {
+      config.mainDaoFactoryAddress = mainDaoFactoryOverride;
+    }
+
+    // Override config if mainDaoAddressOverride is provided
+    if (mainDaoAddressOverride != address(0)) {
+      config.mainDaoAddress = mainDaoAddressOverride;
+    }
+
+    // Load main DAO factory data via getter functions
     (
       address ivotesAdapter,
       address tokenVotingPluginRepo,
@@ -237,14 +218,14 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     config.stage2.tokenVotingHats.voterHatId = voterHatId;
     config.stage2.tokenVotingHats.executorHatId = executorHatId;
 
-    console.log("Main DAO factory data:");
-    console.log("  IVotesAdapter:", ivotesAdapter);
-    console.log("  TokenVoting plugin repo:", tokenVotingPluginRepo);
-    console.log("  Plugin repo version - release:", pluginRepoRelease);
-    console.log("  Plugin repo version - build:", pluginRepoBuild);
-    console.log("  Hat IDs - Proposer:", config.stage2.tokenVotingHats.proposerHatId);
-    console.log("  Hat IDs - Voter:", config.stage2.tokenVotingHats.voterHatId);
-    console.log("  Hat IDs - Executor:", config.stage2.tokenVotingHats.executorHatId);
+    _log("Main DAO factory data:");
+    _log("  IVotesAdapter:", ivotesAdapter);
+    _log("  TokenVoting plugin repo:", tokenVotingPluginRepo);
+    _log("  Plugin repo version - release:", pluginRepoRelease);
+    _log("  Plugin repo version - build:", pluginRepoBuild);
+    _log("  Hat IDs - Proposer:", config.stage2.tokenVotingHats.proposerHatId);
+    _log("  Hat IDs - Voter:", config.stage2.tokenVotingHats.voterHatId);
+    _log("  Hat IDs - Executor:", config.stage2.tokenVotingHats.executorHatId);
 
     // ===== STEP 1 & 2: Deploy Plugin Setups and Factory =====
     factory = _deployPluginSetupsAndFactory(
@@ -262,8 +243,9 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
 
   /// @notice Run script with broadcasting for actual deployment
   function run() external {
+    verbose = true;
     vm.startBroadcast(_deployer());
-    execute();
+    execute(address(0), address(0)); // Use mainDaoFactoryAddress and mainDaoAddress from config
     vm.stopBroadcast();
   }
 
@@ -304,7 +286,7 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     internal
     returns (TokenVotingSetupHats tokenVotingSetup, AdminSetup adminSetup, address sppPluginSetup)
   {
-    console.log("=== Deploying Plugin Setup Contracts ===");
+    _log("=== Deploying Plugin Setup Contracts ===");
 
     // Get base implementations from main DAO factory setup contract
     address governanceErc20 = mainDaoTokenVotingSetup.governanceERC20Base();
@@ -312,17 +294,17 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     require(governanceErc20 != address(0), "governanceErc20 is zero address");
     require(governanceWrappedErc20 != address(0), "governanceWrappedErc20 is zero address");
 
-    console.log("Using GovernanceERC20 base from main DAO:", governanceErc20);
-    console.log("Using GovernanceWrappedERC20 base from main DAO:", governanceWrappedErc20);
+    _log("Using GovernanceERC20 base from main DAO:", governanceErc20);
+    _log("Using GovernanceWrappedERC20 base from main DAO:", governanceWrappedErc20);
 
     // Deploy TokenVotingSetupHats
     tokenVotingSetup =
       new TokenVotingSetupHats(GovernanceERC20(governanceErc20), GovernanceWrappedERC20(governanceWrappedErc20));
-    console.log("TokenVotingSetupHats:", address(tokenVotingSetup));
+    _log("TokenVotingSetupHats:", address(tokenVotingSetup));
 
     // Deploy AdminSetup
     adminSetup = new AdminSetup();
-    console.log("AdminSetup:", address(adminSetup));
+    _log("AdminSetup:", address(adminSetup));
 
     // Get SPP Plugin Setup from existing repo (don't deploy new - it's too large!)
     address sppPluginRepo = _getSppPluginRepo();
@@ -330,9 +312,9 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
       PluginRepo.Tag({ release: uint8(config.sppPlugin.release), build: uint16(config.sppPlugin.build) });
     PluginRepo.Version memory sppVersion = PluginRepo(sppPluginRepo).getVersion(sppRepoTag);
     sppPluginSetup = sppVersion.pluginSetup;
-    console.log("SPP Plugin Setup:", sppPluginSetup);
+    _log("SPP Plugin Setup:", sppPluginSetup);
 
-    console.log("");
+    _log("");
   }
 
   /// @notice Deploys the ApproverHatMinterSubDaoFactory with all parameters
@@ -345,7 +327,7 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     address pluginRepoFactory,
     MainDaoData memory mainDaoData
   ) internal returns (ApproverHatMinterSubDaoFactory) {
-    console.log("=== Deploying ApproverHatMinterSubDaoFactory ===");
+    _log("=== Deploying ApproverHatMinterSubDaoFactory ===");
 
     require(mainDaoData.ivotesAdapter != address(0), "IVotesAdapter is zero address");
 
@@ -380,39 +362,39 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     });
 
     ApproverHatMinterSubDaoFactory factory = new ApproverHatMinterSubDaoFactory(params);
-    console.log("ApproverHatMinterSubDaoFactory:", address(factory));
-    console.log("");
+    _log("ApproverHatMinterSubDaoFactory:", address(factory));
+    _log("");
 
     return factory;
   }
 
   /// @notice Deploys the SubDAO via factory.deployOnce()
   function _deploySubDao(ApproverHatMinterSubDaoFactory factory) internal {
-    console.log("=== Deploying SubDAO ===");
+    _log("=== Deploying SubDAO ===");
 
     factory.deployOnce();
 
-    console.log("SubDAO deployed successfully!");
-    console.log("");
+    _log("SubDAO deployed successfully!");
+    _log("");
   }
 
   /// @notice Logs all deployment addresses
   function _logDeployment(ApproverHatMinterSubDaoFactory factory) internal view {
-    console.log("=== Deployment Artifacts ===");
-    console.log("Factory:", address(factory));
-    console.log("");
+    _log("=== Deployment Artifacts ===");
+    _log("Factory:", address(factory));
+    _log("");
 
     // Retrieve deployment from factory
     Deployment memory deployment = factory.getDeployment();
 
-    console.log("DAO:", address(deployment.dao));
-    console.log("");
-    console.log("Plugins:");
-    console.log("  Admin:", address(deployment.adminPlugin));
-    console.log("  Admin Repo:", address(deployment.adminPluginRepo));
-    console.log("  TokenVotingHats:", address(deployment.tokenVotingPlugin));
-    console.log("  TokenVotingHats Repo:", address(deployment.tokenVotingPluginRepo));
-    console.log("  SPP Plugin:", deployment.sppPlugin);
-    console.log("  SPP Plugin Repo:", address(deployment.sppPluginRepo));
+    _log("DAO:", address(deployment.dao));
+    _log("");
+    _log("Plugins:");
+    _log("  Admin:", address(deployment.adminPlugin));
+    _log("  Admin Repo:", address(deployment.adminPluginRepo));
+    _log("  TokenVotingHats:", address(deployment.tokenVotingPlugin));
+    _log("  TokenVotingHats Repo:", address(deployment.tokenVotingPluginRepo));
+    _log("  SPP Plugin:", deployment.sppPlugin);
+    _log("  SPP Plugin Repo:", address(deployment.sppPluginRepo));
   }
 }

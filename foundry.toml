@@ -50,7 +50,8 @@ fs_permissions = [
   { access = "read", path = "./lib/osx/packages/artifacts/src/addresses.json" },
   { access = "read", path = "./lib/admin-plugin/packages/artifacts/src/addresses.json" },
   { access = "read", path = "./lib/staged-proposal-processor-plugin/npm-artifacts/src/addresses.json" },
-  { access = "read", path = "./config/" }
+  { access = "read", path = "./config/" },
+  { access = "read-write", path = "./test/" }
 ]
 
 # for pre-compiling ir-optimized bytecode that will be later deployed by tests
