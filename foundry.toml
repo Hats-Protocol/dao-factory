@@ -51,6 +51,7 @@ fs_permissions = [
   { access = "read", path = "./lib/admin-plugin/packages/artifacts/src/addresses.json" },
   { access = "read", path = "./lib/staged-proposal-processor-plugin/npm-artifacts/src/addresses.json" },
   { access = "read", path = "./config/" },
+  { access = "read", path = "./broadcast/" },  # Required for BroadcastReader to read deployment artifacts
   { access = "read-write", path = "./test/" }
 ]
 

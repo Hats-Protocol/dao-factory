@@ -184,10 +184,11 @@ contract DeployDaoFromConfigScript is DeploymentScriptHelpers {
   }
 
   /// @notice Run script with broadcasting for actual deployment
-  function run() external {
+  /// @return factory The deployed factory contract
+  function run() external returns (VETokenVotingDaoFactory factory) {
     verbose = true;
     vm.startBroadcast(_deployer());
-    execute();
+    factory = execute();
     vm.stopBroadcast();
   }
 

@@ -111,9 +111,13 @@ struct Deployment {
   PluginRepo sppPluginRepo;
 }
 
-/// @notice A singleton contract designed to run the deployment once and become a read-only store of the contracts
-/// deployed
-contract ApproverHatMinterSubDaoFactory {
+/**
+ * @title SubDaoFactory
+ * @notice Generic factory for deploying SubDAOs that share main DAO infrastructure
+ * @dev Can be used for any SubDAO type (approver-hat-minter, member-curator, etc.)
+ * @dev A singleton contract designed to run the deployment once and become a read-only store of the contracts deployed
+ */
+contract SubDaoFactory {
   address public immutable deployer;
 
   function version() external pure returns (string memory) {

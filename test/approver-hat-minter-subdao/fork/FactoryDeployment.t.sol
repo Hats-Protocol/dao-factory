@@ -3,15 +3,15 @@ pragma solidity ^0.8.17;
 
 import { ApproverHatMinterSubDaoTestBase } from "../base/ApproverHatMinterSubDaoTestBase.sol";
 import {
-  ApproverHatMinterSubDaoFactory,
+  SubDaoFactory,
   DeploymentParameters,
   Deployment
-} from "../../../src/ApproverHatMinterSubDaoFactory.sol";
+} from "../../../src/SubDaoFactory.sol";
 import { VETokenVotingDaoFactory } from "../../../src/VETokenVotingDaoFactory.sol";
 
 /**
  * @title FactoryDeploymentTest
- * @notice Fork integration tests for ApproverHatMinterSubDaoFactory full deployment
+ * @notice Fork integration tests for SubDaoFactory full deployment
  * @dev Tests end-to-end deployment flow with real contracts
  */
 contract FactoryDeploymentTest is ApproverHatMinterSubDaoTestBase {
@@ -72,7 +72,7 @@ contract FactoryDeploymentTest is ApproverHatMinterSubDaoTestBase {
   function test_DeployerIsSet() public {
     setupFork();
     VETokenVotingDaoFactory mainFactory = deployMainDao();
-    (ApproverHatMinterSubDaoFactory _factory,) = deployFactoryAndSubdao(address(mainFactory), address(0));
+    (SubDaoFactory _factory,) = deployFactoryAndSubdao(address(mainFactory), address(0));
 
     // Deployer should be the script that created the factory
     assertTrue(_factory.deployer() != address(0), "Deployer should be set");

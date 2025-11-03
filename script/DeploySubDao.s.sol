@@ -3,7 +3,7 @@ pragma solidity ^0.8.17;
 
 import "forge-std/Script.sol";
 import {
-  ApproverHatMinterSubDaoFactory,
+  SubDaoFactory,
   DeploymentParameters,
   Deployment,
   DaoConfig,
@@ -12,7 +12,7 @@ import {
   Stage2Config,
   TokenVotingHatsPluginConfig,
   SppPluginConfig
-} from "../src/ApproverHatMinterSubDaoFactory.sol";
+} from "../src/SubDaoFactory.sol";
 import { DeploymentScriptHelpers } from "./DeploymentHelpers.sol";
 
 import { TokenVotingSetupHats } from "@token-voting-hats/TokenVotingSetupHats.sol";
@@ -26,11 +26,14 @@ import { PluginRepo } from "@aragon/osx/framework/plugin/repo/PluginRepo.sol";
 
 import { VETokenVotingDaoFactory } from "../src/VETokenVotingDaoFactory.sol";
 
-/// @notice Deployment script for creating a new SubDAO with Admin, TokenVotingHats, and SPP plugins
-/// @dev Run with: forge script script/DeployApproverHatMinterSubDao.s.sol --rpc-url sepolia --broadcast --verify
-/// @dev Configuration loaded from JSON file specified by CONFIG_PATH env var (default:
-/// config/approver-hat-minter-subdao-config.json) @dev Requires PRIVATE_KEY environment variable to be set
-contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers {
+/**
+ * @title DeploySubDaoScript
+ * @notice Generic deployment script for SubDAOs
+ * @dev Run with: forge script script/DeploySubDao.s.sol --rpc-url sepolia --broadcast --verify
+ * @dev Configuration loaded from JSON file specified by CONFIG_PATH env var (default: config/subdaos/approver-hat-minter.json)
+ * @dev Requires PRIVATE_KEY environment variable to be set
+ */
+contract DeploySubDaoScript is Script, DeploymentScriptHelpers {
   struct TokenVotingHatsScriptConfig {
     string votingMode;
     uint32 supportThreshold;
@@ -63,6 +66,10 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
   Config config;
   Stage2Config stage2Parsed;
 
+  /// @notice Stores last deployed factory for orchestrator to read
+  /// @dev Set by run(), read by orchestrator after calling run()
+  SubDaoFactory public lastDeployedFactory;
+
   /// @notice Small struct to pass main DAO values to _deployFactory without stack depth issues
   struct MainDaoData {
     address ivotesAdapter;
@@ -74,7 +81,7 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
   /// @notice Loads configuration from JSON file
   function _loadConfig() internal {
     string memory root = vm.projectRoot();
-    string memory configPath = vm.envOr("CONFIG_PATH", string("config/approver-hat-minter-subdao-config.json"));
+    string memory configPath = vm.envOr("CONFIG_PATH", string("config/subdaos/approver-hat-minter.json"));
     string memory path = string.concat(root, "/", configPath);
     string memory json = vm.readFile(path);
 
@@ -178,6 +185,18 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     executorHatId = mainFactory.getExecutorHatId();
   }
 
+  /// @notice Try to read an address from environment variable
+  /// @param key Environment variable name
+  /// @return addr Address from env var, or address(0) if not set
+  /// @dev Used by orchestrator to pass main DAO addresses via env vars
+  function _tryEnvAddress(string memory key) internal view returns (address addr) {
+    try vm.envAddress(key) returns (address value) {
+      return value;
+    } catch {
+      return address(0);  // Falls back to config value in execute()
+    }
+  }
+
   /// @notice Execute the full deployment (called by run() or from tests)
   /// @param mainDaoFactoryOverride Optional main DAO factory address to use instead of config value
   /// @param mainDaoAddressOverride Optional main DAO address to use instead of config value
@@ -186,7 +205,7 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
   /// @return factory The deployed factory contract
   function execute(address mainDaoFactoryOverride, address mainDaoAddressOverride)
     public
-    returns (ApproverHatMinterSubDaoFactory factory)
+    returns (SubDaoFactory factory)
   {
     // Load configuration from JSON
     _loadConfig();
@@ -242,10 +261,17 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
   }
 
   /// @notice Run script with broadcasting for actual deployment
+  /// @dev Orchestrator sets MAIN_DAO_FACTORY and MAIN_DAO env vars to pass addresses
+  /// @dev If env vars not set, uses mainDaoFactoryAddress and mainDaoAddress from config
   function run() external {
     verbose = true;
+
+    // Read overrides from env vars (set by orchestrator)
+    address mainDaoFactoryOverride = _tryEnvAddress("MAIN_DAO_FACTORY");
+    address mainDaoOverride = _tryEnvAddress("MAIN_DAO");
+
     vm.startBroadcast(_deployer());
-    execute(address(0), address(0)); // Use mainDaoFactoryAddress and mainDaoAddress from config
+    lastDeployedFactory = execute(mainDaoFactoryOverride, mainDaoOverride);
     vm.stopBroadcast();
   }
 
@@ -257,7 +283,7 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     address tokenVotingPluginRepo,
     uint8 pluginRepoRelease,
     uint16 pluginRepoBuild
-  ) internal returns (ApproverHatMinterSubDaoFactory) {
+  ) internal returns (SubDaoFactory) {
     TokenVotingSetupHats newTokenVotingSetup;
     AdminSetup adminSetup;
     address sppPluginSetup;
@@ -317,7 +343,7 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     _log("");
   }
 
-  /// @notice Deploys the ApproverHatMinterSubDaoFactory with all parameters
+  /// @notice Deploys the SubDaoFactory with all parameters
   function _deployFactory(
     TokenVotingSetupHats tokenVotingSetup,
     AdminSetup adminSetup,
@@ -326,8 +352,8 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
     address pluginSetupProcessor,
     address pluginRepoFactory,
     MainDaoData memory mainDaoData
-  ) internal returns (ApproverHatMinterSubDaoFactory) {
-    _log("=== Deploying ApproverHatMinterSubDaoFactory ===");
+  ) internal returns (SubDaoFactory) {
+    _log("=== Deploying SubDaoFactory ===");
 
     require(mainDaoData.ivotesAdapter != address(0), "IVotesAdapter is zero address");
 
@@ -361,15 +387,15 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
       pluginRepoFactory: PluginRepoFactory(pluginRepoFactory)
     });
 
-    ApproverHatMinterSubDaoFactory factory = new ApproverHatMinterSubDaoFactory(params);
-    _log("ApproverHatMinterSubDaoFactory:", address(factory));
+    SubDaoFactory factory = new SubDaoFactory(params);
+    _log("SubDaoFactory:", address(factory));
     _log("");
 
     return factory;
   }
 
   /// @notice Deploys the SubDAO via factory.deployOnce()
-  function _deploySubDao(ApproverHatMinterSubDaoFactory factory) internal {
+  function _deploySubDao(SubDaoFactory factory) internal {
     _log("=== Deploying SubDAO ===");
 
     factory.deployOnce();
@@ -379,7 +405,7 @@ contract DeployApproverHatMinterSubDaoScript is Script, DeploymentScriptHelpers 
   }
 
   /// @notice Logs all deployment addresses
-  function _logDeployment(ApproverHatMinterSubDaoFactory factory) internal view {
+  function _logDeployment(SubDaoFactory factory) internal view {
     _log("=== Deployment Artifacts ===");
     _log("Factory:", address(factory));
     _log("");

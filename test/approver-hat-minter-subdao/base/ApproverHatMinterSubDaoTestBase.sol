@@ -4,11 +4,11 @@ pragma solidity ^0.8.17;
 import { BaseFactoryTest } from "../../base/BaseFactoryTest.sol";
 
 // Import the deployment script to run it
-import { DeployApproverHatMinterSubDaoScript } from "../../../script/DeployApproverHatMinterSubDao.s.sol";
+import { DeploySubDaoScript } from "../../../script/DeploySubDao.s.sol";
 
 // Factory and deployment types
 import {
-  ApproverHatMinterSubDaoFactory,
+  SubDaoFactory,
   Deployment,
   DeploymentParameters,
   DaoConfig,
@@ -17,7 +17,7 @@ import {
   Stage2Config,
   TokenVotingHatsPluginConfig,
   SppPluginConfig
-} from "../../../src/ApproverHatMinterSubDaoFactory.sol";
+} from "../../../src/SubDaoFactory.sol";
 
 // Main DAO factory for querying deployment data
 import { VETokenVotingDaoFactory } from "../../../src/VETokenVotingDaoFactory.sol";
@@ -35,7 +35,7 @@ import { Action } from "@aragon/osx-commons-contracts/src/executors/IExecutor.so
 /**
  * @title ApproverHatMinterSubDaoTestBase
  * @notice Base contract for ApproverHatMinterSubDaoFactory tests
- * @dev Runs the DeployApproverHatMinterSubDaoScript and provides subDAO-specific test helpers
+ * @dev Runs the DeploySubDaoScript and provides subDAO-specific test helpers
  */
 abstract contract ApproverHatMinterSubDaoTestBase is BaseFactoryTest {
   // ============================================
@@ -43,10 +43,10 @@ abstract contract ApproverHatMinterSubDaoTestBase is BaseFactoryTest {
   // ============================================
 
   /// @notice The deployment script instance
-  DeployApproverHatMinterSubDaoScript internal deployScript;
+  DeploySubDaoScript internal deployScript;
 
   /// @notice The factory contract
-  ApproverHatMinterSubDaoFactory internal factory;
+  SubDaoFactory internal factory;
 
   /// @notice Full deployment struct
   Deployment internal deployment;
@@ -57,7 +57,7 @@ abstract contract ApproverHatMinterSubDaoTestBase is BaseFactoryTest {
   StagedProposalProcessor internal sppPlugin;
 
   /// @notice Config loaded directly by test (to verify script loads it correctly)
-  DeployApproverHatMinterSubDaoScript.Config internal testConfig;
+  DeploySubDaoScript.Config internal testConfig;
 
   // ============================================
   // SETUP
@@ -74,13 +74,13 @@ abstract contract ApproverHatMinterSubDaoTestBase is BaseFactoryTest {
     // Tests must call setupFork() and then _parseHatIdsFromConfig() explicitly
 
     // Create deployment script instance
-    deployScript = new DeployApproverHatMinterSubDaoScript();
+    deployScript = new DeploySubDaoScript();
   }
 
   /// @notice Load config directly for test verification
   function _loadTestConfig() internal {
     string memory root = vm.projectRoot();
-    string memory path = string.concat(root, "/config/approver-hat-minter-subdao-config.json");
+    string memory path = string.concat(root, "/config/subdaos/approver-hat-minter.json");
     string memory json = vm.readFile(path);
 
     // Parse root level fields
@@ -175,7 +175,7 @@ abstract contract ApproverHatMinterSubDaoTestBase is BaseFactoryTest {
   // ============================================
 
   /// @notice Deploy factory and subDAO using the deployment script
-  /// @dev This runs the actual DeployApproverHatMinterSubDaoScript.execute() function
+  /// @dev This runs the actual DeploySubDaoScript.execute() function
   /// @dev NOTE: This creates a NEW script instance to ensure it's on the current fork
   /// @param mainDaoFactoryOverride Optional main DAO factory address (if address(0), uses config)
   /// @param mainDaoAddressOverride Optional main DAO address (if address(0), uses config)
@@ -183,11 +183,11 @@ abstract contract ApproverHatMinterSubDaoTestBase is BaseFactoryTest {
   /// @return Deployed script instance
   function deployFactoryAndSubdao(address mainDaoFactoryOverride, address mainDaoAddressOverride)
     internal
-    returns (ApproverHatMinterSubDaoFactory, DeployApproverHatMinterSubDaoScript)
+    returns (SubDaoFactory, DeploySubDaoScript)
   {
     // Create a NEW script instance on the current fork
     // (the one created in setUp() might be on a different fork)
-    DeployApproverHatMinterSubDaoScript script = new DeployApproverHatMinterSubDaoScript();
+    DeploySubDaoScript script = new DeploySubDaoScript();
 
     // Execute the script with optional overrides (address(0) = use config)
     factory = script.execute(mainDaoFactoryOverride, mainDaoAddressOverride);
@@ -278,7 +278,7 @@ abstract contract ApproverHatMinterSubDaoTestBase is BaseFactoryTest {
   // ============================================
 
   /// @notice Get the test config (loaded directly by test base)
-  function getTestConfig() internal view returns (DeployApproverHatMinterSubDaoScript.Config memory) {
+  function getTestConfig() internal view returns (DeploySubDaoScript.Config memory) {
     return testConfig;
   }
 }

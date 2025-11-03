@@ -2,12 +2,12 @@
 pragma solidity ^0.8.17;
 
 import { ApproverHatMinterSubDaoTestBase } from "../base/ApproverHatMinterSubDaoTestBase.sol";
-import { ApproverHatMinterSubDaoFactory, DeploymentParameters } from "../../../src/ApproverHatMinterSubDaoFactory.sol";
+import { SubDaoFactory, DeploymentParameters } from "../../../src/SubDaoFactory.sol";
 import { VETokenVotingDaoFactory } from "../../../src/VETokenVotingDaoFactory.sol";
 
 /**
  * @title FactoryPermissionsTest
- * @notice Fork integration tests for ApproverHatMinterSubDaoFactory permission setup
+ * @notice Fork integration tests for SubDaoFactory permission setup
  * @dev Tests that all permissions are correctly configured after deployment
  */
 contract FactoryPermissionsTest is ApproverHatMinterSubDaoTestBase {
@@ -68,7 +68,7 @@ contract FactoryPermissionsTest is ApproverHatMinterSubDaoTestBase {
   function test_FactoryTemporaryPermissionsRevoked() public {
     setupFork();
     VETokenVotingDaoFactory mainFactory = deployMainDao();
-    (ApproverHatMinterSubDaoFactory _factory,) = deployFactoryAndSubdao(address(mainFactory), address(0));
+    (SubDaoFactory _factory,) = deployFactoryAndSubdao(address(mainFactory), address(0));
 
     bytes32 ROOT_PERMISSION_ID = dao.ROOT_PERMISSION_ID();
     bytes32 EXECUTE_PERMISSION_ID = dao.EXECUTE_PERMISSION_ID();

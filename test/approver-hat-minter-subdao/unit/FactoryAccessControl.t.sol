@@ -3,7 +3,7 @@ pragma solidity ^0.8.17;
 
 import { BaseFactoryTest } from "../../base/BaseFactoryTest.sol";
 import {
-  ApproverHatMinterSubDaoFactory,
+  SubDaoFactory,
   DeploymentParameters,
   DaoConfig,
   AdminPluginConfig,
@@ -11,7 +11,7 @@ import {
   Stage2Config,
   TokenVotingHatsPluginConfig,
   SppPluginConfig
-} from "../../../src/ApproverHatMinterSubDaoFactory.sol";
+} from "../../../src/SubDaoFactory.sol";
 import { TokenVotingSetupHats } from "@token-voting-hats/TokenVotingSetupHats.sol";
 import { AdminSetup } from "@admin-plugin/AdminSetup.sol";
 import { PluginRepo } from "@aragon/osx/framework/plugin/repo/PluginRepo.sol";
@@ -23,11 +23,11 @@ import { DeployDaoFromConfigScript } from "../../../script/DeployDao.s.sol";
 
 /**
  * @title FactoryAccessControlTest
- * @notice Unit tests for ApproverHatMinterSubDaoFactory access control and error conditions
+ * @notice Unit tests for SubDaoFactory access control and error conditions
  * @dev Tests authorization and validation using config values
  */
 contract FactoryAccessControlTest is BaseFactoryTest {
-  ApproverHatMinterSubDaoFactory factory;
+  SubDaoFactory factory;
 
   // Main DAO factory (deployed for real addresses, not mocks!)
   VETokenVotingDaoFactory mainFactory;
@@ -72,7 +72,7 @@ contract FactoryAccessControlTest is BaseFactoryTest {
   /// @notice Load config from JSON file
   function _loadConfig() internal {
     string memory root = vm.projectRoot();
-    string memory path = string.concat(root, "/config/approver-hat-minter-subdao-config.json");
+    string memory path = string.concat(root, "/config/subdaos/approver-hat-minter.json");
     string memory json = vm.readFile(path);
 
     // Parse DAO config
@@ -189,11 +189,11 @@ contract FactoryAccessControlTest is BaseFactoryTest {
     DeploymentParameters memory params = _createMinimalParams();
 
     vm.prank(deployer);
-    factory = new ApproverHatMinterSubDaoFactory(params);
+    factory = new SubDaoFactory(params);
 
     // Try to call deployOnce as unauthorized user
     vm.prank(unauthorized);
-    vm.expectRevert(ApproverHatMinterSubDaoFactory.Unauthorized.selector);
+    vm.expectRevert(SubDaoFactory.Unauthorized.selector);
     factory.deployOnce();
   }
 
@@ -203,7 +203,7 @@ contract FactoryAccessControlTest is BaseFactoryTest {
     DeploymentParameters memory params = _createParamsWithZeroIVotesAdapter();
 
     vm.prank(deployer);
-    factory = new ApproverHatMinterSubDaoFactory(params);
+    factory = new SubDaoFactory(params);
 
     // Verify zero address is stored (will fail on deployOnce())
     DeploymentParameters memory storedParams = factory.getDeploymentParameters();
@@ -215,7 +215,7 @@ contract FactoryAccessControlTest is BaseFactoryTest {
     DeploymentParameters memory params = _createMinimalParams();
 
     vm.prank(deployer);
-    factory = new ApproverHatMinterSubDaoFactory(params);
+    factory = new SubDaoFactory(params);
 
     assertEq(factory.deployer(), deployer, "Deployer should be msg.sender");
   }
@@ -229,10 +229,10 @@ contract FactoryAccessControlTest is BaseFactoryTest {
     address deployer2 = address(0x200);
 
     vm.prank(deployer1);
-    ApproverHatMinterSubDaoFactory factory1 = new ApproverHatMinterSubDaoFactory(params1);
+    SubDaoFactory factory1 = new SubDaoFactory(params1);
 
     vm.prank(deployer2);
-    ApproverHatMinterSubDaoFactory factory2 = new ApproverHatMinterSubDaoFactory(params2);
+    SubDaoFactory factory2 = new SubDaoFactory(params2);
 
     assertEq(factory1.deployer(), deployer1, "Factory1 deployer should be deployer1");
     assertEq(factory2.deployer(), deployer2, "Factory2 deployer should be deployer2");

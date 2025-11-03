@@ -3,16 +3,16 @@ pragma solidity ^0.8.17;
 
 import { ApproverHatMinterSubDaoTestBase } from "../base/ApproverHatMinterSubDaoTestBase.sol";
 import {
-  ApproverHatMinterSubDaoFactory,
+  SubDaoFactory,
   DeploymentParameters,
   Deployment
-} from "../../../src/ApproverHatMinterSubDaoFactory.sol";
+} from "../../../src/SubDaoFactory.sol";
 import { VETokenVotingDaoFactory } from "../../../src/VETokenVotingDaoFactory.sol";
-import { DeployApproverHatMinterSubDaoScript } from "../../../script/DeployApproverHatMinterSubDao.s.sol";
+import { DeploySubDaoScript } from "../../../script/DeploySubDao.s.sol";
 
 /**
  * @title FactoryErrorsTest
- * @notice Fork integration tests for ApproverHatMinterSubDaoFactory error conditions
+ * @notice Fork integration tests for SubDaoFactory error conditions
  * @dev Tests error handling with real contract interactions
  */
 contract FactoryErrorsTest is ApproverHatMinterSubDaoTestBase {
@@ -30,7 +30,7 @@ contract FactoryErrorsTest is ApproverHatMinterSubDaoTestBase {
 
     // Try to call deployOnce again as unauthorized user
     vm.prank(unauthorized);
-    vm.expectRevert(ApproverHatMinterSubDaoFactory.Unauthorized.selector);
+    vm.expectRevert(SubDaoFactory.Unauthorized.selector);
     factory.deployOnce();
   }
 
@@ -38,11 +38,11 @@ contract FactoryErrorsTest is ApproverHatMinterSubDaoTestBase {
   function test_DeployOnce_RevertsWhenCalledTwice() public {
     setupFork();
     VETokenVotingDaoFactory mainFactory = deployMainDao();
-    (ApproverHatMinterSubDaoFactory _factory, DeployApproverHatMinterSubDaoScript script) = deployFactoryAndSubdao(address(mainFactory), address(0));
+    (SubDaoFactory _factory, DeploySubDaoScript script) = deployFactoryAndSubdao(address(mainFactory), address(0));
 
     // Try to call deployOnce again (should revert with AlreadyDeployed)
     vm.prank(address(script));
-    vm.expectRevert(ApproverHatMinterSubDaoFactory.AlreadyDeployed.selector);
+    vm.expectRevert(SubDaoFactory.AlreadyDeployed.selector);
     _factory.deployOnce();
   }
 
@@ -56,10 +56,10 @@ contract FactoryErrorsTest is ApproverHatMinterSubDaoTestBase {
 
     // Deploy factory with zero adapter
     address deployer = address(this);
-    ApproverHatMinterSubDaoFactory badFactory = new ApproverHatMinterSubDaoFactory(params);
+    SubDaoFactory badFactory = new SubDaoFactory(params);
 
     // Try to deploy (should revert with InvalidIVotesAdapterAddress)
-    vm.expectRevert(ApproverHatMinterSubDaoFactory.InvalidIVotesAdapterAddress.selector);
+    vm.expectRevert(SubDaoFactory.InvalidIVotesAdapterAddress.selector);
     badFactory.deployOnce();
   }
 
@@ -70,7 +70,7 @@ contract FactoryErrorsTest is ApproverHatMinterSubDaoTestBase {
 
     // Create a new factory without deploying
     DeploymentParameters memory params = _createValidParams(mainFactory);
-    ApproverHatMinterSubDaoFactory newFactory = new ApproverHatMinterSubDaoFactory(params);
+    SubDaoFactory newFactory = new SubDaoFactory(params);
 
     // Version should be accessible
     assertEq(newFactory.version(), "1.0.0", "Version should be accessible before deployment");
@@ -83,7 +83,7 @@ contract FactoryErrorsTest is ApproverHatMinterSubDaoTestBase {
 
     // Create a new factory without deploying
     DeploymentParameters memory params = _createValidParams(mainFactory);
-    ApproverHatMinterSubDaoFactory newFactory = new ApproverHatMinterSubDaoFactory(params);
+    SubDaoFactory newFactory = new SubDaoFactory(params);
 
     // Parameters should be accessible
     DeploymentParameters memory retrieved = newFactory.getDeploymentParameters();
@@ -97,7 +97,7 @@ contract FactoryErrorsTest is ApproverHatMinterSubDaoTestBase {
 
     // Create a new factory without deploying
     DeploymentParameters memory params = _createValidParams(mainFactory);
-    ApproverHatMinterSubDaoFactory newFactory = new ApproverHatMinterSubDaoFactory(params);
+    SubDaoFactory newFactory = new SubDaoFactory(params);
 
     // Deployment should be empty
     Deployment memory retrieved = newFactory.getDeployment();
@@ -119,8 +119,8 @@ contract FactoryErrorsTest is ApproverHatMinterSubDaoTestBase {
     params.ivotesAdapter = mainFactory.getIVotesAdapter();
 
     // Get real setup contracts from deployment script (pass main factory address)
-    DeployApproverHatMinterSubDaoScript script = new DeployApproverHatMinterSubDaoScript();
-    ApproverHatMinterSubDaoFactory tempFactory = script.execute(address(mainFactory), address(0));
+    DeploySubDaoScript script = new DeploySubDaoScript();
+    SubDaoFactory tempFactory = script.execute(address(mainFactory), address(0));
     DeploymentParameters memory scriptParams = tempFactory.getDeploymentParameters();
 
     // Use the setup contracts from the script

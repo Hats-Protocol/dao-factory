@@ -3,7 +3,7 @@ pragma solidity ^0.8.17;
 
 import { BaseFactoryTest } from "../../base/BaseFactoryTest.sol";
 import {
-  ApproverHatMinterSubDaoFactory,
+  SubDaoFactory,
   DeploymentParameters,
   DaoConfig,
   AdminPluginConfig,
@@ -11,7 +11,7 @@ import {
   Stage2Config,
   TokenVotingHatsPluginConfig,
   SppPluginConfig
-} from "../../../src/ApproverHatMinterSubDaoFactory.sol";
+} from "../../../src/SubDaoFactory.sol";
 import { TokenVotingSetupHats } from "@token-voting-hats/TokenVotingSetupHats.sol";
 import { AdminSetup } from "@admin-plugin/AdminSetup.sol";
 import { PluginRepo } from "@aragon/osx/framework/plugin/repo/PluginRepo.sol";
@@ -23,11 +23,11 @@ import { DeployDaoFromConfigScript } from "../../../script/DeployDao.s.sol";
 
 /**
  * @title FactoryConstructorTest
- * @notice Unit tests for ApproverHatMinterSubDaoFactory constructor
+ * @notice Unit tests for SubDaoFactory constructor
  * @dev Tests parameter storage using values from config file
  */
 contract FactoryConstructorTest is BaseFactoryTest {
-  ApproverHatMinterSubDaoFactory factory;
+  SubDaoFactory factory;
 
   // Main DAO factory (deployed for real addresses, not mocks!)
   VETokenVotingDaoFactory mainFactory;
@@ -71,7 +71,7 @@ contract FactoryConstructorTest is BaseFactoryTest {
   /// @notice Load config from JSON file
   function _loadConfig() internal {
     string memory root = vm.projectRoot();
-    string memory path = string.concat(root, "/config/approver-hat-minter-subdao-config.json");
+    string memory path = string.concat(root, "/config/subdaos/approver-hat-minter.json");
     string memory json = vm.readFile(path);
 
     // Parse DAO config
@@ -181,7 +181,7 @@ contract FactoryConstructorTest is BaseFactoryTest {
     DeploymentParameters memory params = _createMinimalParams();
 
     vm.prank(deployer);
-    factory = new ApproverHatMinterSubDaoFactory(params);
+    factory = new SubDaoFactory(params);
 
     assertEq(factory.deployer(), deployer, "Deployer should be stored correctly");
   }
@@ -191,7 +191,7 @@ contract FactoryConstructorTest is BaseFactoryTest {
     DeploymentParameters memory params = _createMinimalParams();
 
     vm.prank(deployer);
-    factory = new ApproverHatMinterSubDaoFactory(params);
+    factory = new SubDaoFactory(params);
 
     DeploymentParameters memory storedParams = factory.getDeploymentParameters();
     assertEq(storedParams.dao.metadataUri, params.dao.metadataUri, "Metadata URI should match");
@@ -203,7 +203,7 @@ contract FactoryConstructorTest is BaseFactoryTest {
     DeploymentParameters memory params = _createMinimalParams();
 
     vm.prank(deployer);
-    factory = new ApproverHatMinterSubDaoFactory(params);
+    factory = new SubDaoFactory(params);
 
     DeploymentParameters memory storedParams = factory.getDeploymentParameters();
     assertEq(
@@ -216,7 +216,7 @@ contract FactoryConstructorTest is BaseFactoryTest {
     DeploymentParameters memory params = _createMinimalParams();
 
     vm.prank(deployer);
-    factory = new ApproverHatMinterSubDaoFactory(params);
+    factory = new SubDaoFactory(params);
 
     DeploymentParameters memory storedParams = factory.getDeploymentParameters();
     assertEq(storedParams.stage1.proposerAddress, config.stage1.proposerAddress, "Proposer address should match config");
@@ -230,7 +230,7 @@ contract FactoryConstructorTest is BaseFactoryTest {
     DeploymentParameters memory params = _createMinimalParams();
 
     vm.prank(deployer);
-    factory = new ApproverHatMinterSubDaoFactory(params);
+    factory = new SubDaoFactory(params);
 
     DeploymentParameters memory storedParams = factory.getDeploymentParameters();
     assertEq(
@@ -275,7 +275,7 @@ contract FactoryConstructorTest is BaseFactoryTest {
     DeploymentParameters memory params = _createMinimalParams();
 
     vm.prank(deployer);
-    factory = new ApproverHatMinterSubDaoFactory(params);
+    factory = new SubDaoFactory(params);
 
     DeploymentParameters memory storedParams = factory.getDeploymentParameters();
     assertEq(storedParams.ivotesAdapter, config.ivotesAdapter, "IVotesAdapter should match config");
@@ -286,7 +286,7 @@ contract FactoryConstructorTest is BaseFactoryTest {
     DeploymentParameters memory params = _createMinimalParams();
 
     vm.prank(deployer);
-    factory = new ApproverHatMinterSubDaoFactory(params);
+    factory = new SubDaoFactory(params);
 
     DeploymentParameters memory storedParams = factory.getDeploymentParameters();
     assertEq(address(storedParams.tokenVotingSetup), address(params.tokenVotingSetup), "TokenVotingSetup should match");
@@ -299,7 +299,7 @@ contract FactoryConstructorTest is BaseFactoryTest {
     DeploymentParameters memory params = _createMinimalParams();
 
     vm.prank(deployer);
-    factory = new ApproverHatMinterSubDaoFactory(params);
+    factory = new SubDaoFactory(params);
 
     DeploymentParameters memory storedParams = factory.getDeploymentParameters();
     // Verify addresses are set (we use mock addresses in unit tests)
@@ -313,7 +313,7 @@ contract FactoryConstructorTest is BaseFactoryTest {
     DeploymentParameters memory params = _createMinimalParams();
 
     vm.prank(deployer);
-    factory = new ApproverHatMinterSubDaoFactory(params);
+    factory = new SubDaoFactory(params);
 
     assertEq(factory.version(), "1.0.0", "Factory version should be 1.0.0");
   }
@@ -323,7 +323,7 @@ contract FactoryConstructorTest is BaseFactoryTest {
     DeploymentParameters memory params = _createMinimalParams();
 
     vm.prank(deployer);
-    factory = new ApproverHatMinterSubDaoFactory(params);
+    factory = new SubDaoFactory(params);
 
     // Check that deployment struct is empty (DAO address is zero)
     assertEq(address(factory.getDeployment().dao), address(0), "Initial deployment should be empty");
