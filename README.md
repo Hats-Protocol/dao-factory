@@ -1,25 +1,105 @@
-# solidity-template
+# DAO Factory
 
-Template repo for solidity projects
+Factory contracts for deploying the Hats DAO, using Aragon OSx Vote Escrow (VE) governance and configurable SubDAOs.
 
-## Overview and Usage
+## Overview
+
+This repository contains:
+- **Main DAO Factory**: Deploys Aragon OSx DAO with VE token governance and Hats Protocol integration
+- **SubDAO Factory**: Deploys configurable SubDAOs with staged proposal processing (veto or approval mode)
 
 ## Development
 
-This repo uses Foundry for development and testing. To get started:
+### Prerequisites
 
-1. Fork the project
-2. Install [Foundry](https://book.getfoundry.sh/getting-started/installation)
-3. To install dependencies, run `forge install`
-4. To compile the contracts, run `forge build`
-5. To test, run `forge test`
+1. Install [Foundry](https://book.getfoundry.sh/getting-started/installation)
+2. Clone the repository and install dependencies:
+   ```bash
+   forge install
+   ```
 
-### IR-Optimized Builds
+### Building
 
-This repo also supports contracts compiled via IR. Since compiling all contracts via IR would slow down testing workflows, we only want to do this for our target contract(s), not anything in this `test` or `script` stack. We accomplish this by pre-compiled the target contract(s) and then loading the pre-compiled artifacts in the test suite.
+Compile all contracts:
+```bash
+forge build
+```
 
-First, we compile the target contract(s) via IR by running`FOUNDRY_PROFILE=optimized forge build` (ensuring that FOUNDRY_PROFILE is not in our .env file)
+### Testing
 
-Next, ensure that tests are using the `DeployOptimized` script, and run `forge test` as normal.
+Run all tests:
+```bash
+forge test --summary --jobs 1
+```
 
-See the wonderful [Seaport repo](https://github.com/ProjectOpenSea/seaport/blob/main/README.md#foundry-tests) for more details and options for this approach.
+**Important:** Tests must be run with `--jobs 1` (sequential execution) to ensure proper test isolation.
+
+Run specific test suites:
+```bash
+# SubDAO tests
+forge test --match-path "test/subdao/**/*.sol"
+
+# Fork tests
+forge test --match-path "test/fork/**/*.sol"
+
+# Unit tests
+forge test --match-path "test/unit/**/*.sol"
+```
+
+Run with detailed output:
+```bash
+forge test --summary --jobs 1 -vv
+```
+
+### Test Coverage
+
+Generate coverage report:
+```bash
+forge coverage
+```
+
+## Deployment
+
+### Configuration Files
+
+Configuration files are located in `config/`:
+- `config/deployment-config.json` - Main DAO configuration
+- `config/subdaos/` - SubDAO configurations
+
+### Deployment Scripts
+
+Individual deployment scripts in `script/`:
+- `DeployDao.s.sol` - Main DAO deployment
+- `DeploySubDao.s.sol` - SubDAO deployment
+
+### Production Deployment Orchestrator
+
+For safe production deployments with manual verification checkpoints, use the orchestrator in `script/orchestrator/`:
+- `01_DeployMainDao.s.sol` - Step 1: Deploy Main DAO
+- `02_DeploySubDaos.s.sol` - Step 2: Deploy SubDAOs
+
+The orchestrator provides a two-step deployment process with a verification checkpoint between main DAO and SubDAO deployments. For complete instructions, see [script/orchestrator/README.md](script/orchestrator/README.md).
+
+## Project Structure
+
+```
+├── src/                    # Smart contracts
+│   ├── VETokenVotingDaoFactory.sol
+│   └── SubDaoFactory.sol
+├── script/                 # Deployment scripts
+│   ├── DeployDao.s.sol
+│   ├── DeploySubDao.s.sol
+│   └── orchestrator/      # Production deployment orchestrator
+├── test/                   # Test files
+│   ├── fork/              # Fork tests
+│   ├── unit/              # Unit tests
+│   ├── subdao/            # SubDAO tests
+│   └── orchestrator/      # Integration tests
+├── config/                 # Configuration files
+└── docs/                   # Documentation
+```
+
+## Documentation
+
+- [Production Deployment Orchestrator](script/orchestrator/README.md) - Safe two-step deployment guide
+- [Permissions Analysis](docs/permissions-analysis.md) - Permission structure analysis
