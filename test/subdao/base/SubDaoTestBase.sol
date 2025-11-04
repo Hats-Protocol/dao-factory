@@ -20,7 +20,7 @@ import {
 } from "../../../src/SubDaoFactory.sol";
 
 // Main DAO factory for querying deployment data
-import { VETokenVotingDaoFactory } from "../../../src/VETokenVotingDaoFactory.sol";
+import { VETokenVotingDaoFactory, Deployment as MainDaoDeployment } from "../../../src/VETokenVotingDaoFactory.sol";
 import { DeployDaoFromConfigScript } from "../../../script/DeployDao.s.sol";
 
 // Deployed contract types for quick access
@@ -30,14 +30,19 @@ import { IMajorityVoting } from "@token-voting-hats/base/IMajorityVoting.sol";
 import { MajorityVotingBase } from "@token-voting-hats/base/MajorityVotingBase.sol";
 import { Admin } from "@admin-plugin/Admin.sol";
 import { StagedProposalProcessor } from "staged-proposal-processor-plugin/StagedProposalProcessor.sol";
-import { Action } from "@aragon/osx-commons-contracts/src/executors/IExecutor.sol";
+import { Action } from "@aragon/osx/core/dao/DAO.sol";
+
+// VE Token System for governance tests
+import { VotingEscrowV1_2_0 as VotingEscrow } from "@escrow/VotingEscrowIncreasing_v1_2_0.sol";
+import { EscrowIVotesAdapter } from "@delegation/EscrowIVotesAdapter.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
- * @title ApproverHatMinterSubDaoTestBase
- * @notice Base contract for ApproverHatMinterSubDaoFactory tests
- * @dev Runs the DeploySubDaoScript and provides subDAO-specific test helpers
+ * @title SubDaoTestBase
+ * @notice Base contract for SubDAO tests (both veto and approve modes)
+ * @dev Provides shared helpers and config loading utilities
  */
-abstract contract ApproverHatMinterSubDaoTestBase is BaseFactoryTest {
+abstract contract SubDaoTestBase is BaseFactoryTest {
   // ============================================
   // DEPLOYMENT ARTIFACTS
   // ============================================
@@ -60,28 +65,54 @@ abstract contract ApproverHatMinterSubDaoTestBase is BaseFactoryTest {
   DeploySubDaoScript.Config internal testConfig;
 
   // ============================================
+  // GOVERNANCE TEST SUPPORT
+  // ============================================
+
+  /// @notice Test user addresses (EOAs)
+  address internal alice = vm.addr(1);
+  address internal bob = vm.addr(2);
+  address internal charlie = vm.addr(3);
+
+  /// @notice Main DAO components (needed for voting power)
+  VotingEscrow internal escrow;
+  EscrowIVotesAdapter internal ivotesAdapter;
+
+  /// @notice Standard lock amount for tests
+  uint256 internal constant STANDARD_LOCK_AMOUNT = 1000 ether;
+
+  // ============================================
   // SETUP
   // ============================================
 
   function setUp() public virtual {
-    // Use latest block for ApproverHatMinter tests (overrides BaseFactoryTest default)
-    forkBlockNumber = 0;
+    // Reset CONFIG_PATH to default to prevent pollution from previous tests
+    // SubDAO tests will override this in loadConfigAndDeploy()
+    vm.setEnv("CONFIG_PATH", "config/deployment-config.json");
 
-    // Load config directly in test (before script runs)
-    _loadTestConfig();
-
-    // NOTE: _parseHatIdsFromConfig() is NOT called here because it requires a fork to be set up
-    // Tests must call setupFork() and then _parseHatIdsFromConfig() explicitly
+    // Reset state variables to ensure clean slate
+    delete factory;
+    delete deployment;
+    delete dao;
+    delete tokenVoting;
+    delete adminPlugin;
+    delete sppPlugin;
+    delete escrow;
+    delete ivotesAdapter;
 
     // Create deployment script instance
     deployScript = new DeploySubDaoScript();
   }
 
-  /// @notice Load config directly for test verification
-  function _loadTestConfig() internal {
+  // ============================================
+  // HELPERS: Config Loading
+  // ============================================
+
+  /// @notice Load config from specified path
+  /// @param configPath Relative path to config file (e.g., "config/subdaos/approver-hat-minter.json")
+  function _loadTestConfig(string memory configPath) internal {
     string memory root = vm.projectRoot();
-    string memory path = string.concat(root, "/config/subdaos/approver-hat-minter.json");
-    string memory json = vm.readFile(path);
+    string memory fullPath = string.concat(root, "/", configPath);
+    string memory json = vm.readFile(fullPath);
 
     // Parse root level fields
     testConfig.version = vm.parseJsonString(json, ".version");
@@ -95,14 +126,13 @@ abstract contract ApproverHatMinterSubDaoTestBase is BaseFactoryTest {
     testConfig.mainDaoAddress = vm.parseJsonAddress(json, ".mainDaoAddress");
     testConfig.mainDaoFactoryAddress = vm.parseJsonAddress(json, ".mainDaoFactoryAddress");
 
-    // Note: mainDaoDeploymentData is NO LONGER loaded from config!
-    // It will be queried from the main DAO factory via getter functions by the deployment script
-
     // Parse admin plugin config
     testConfig.adminPlugin.adminAddress = vm.parseJsonAddress(json, ".adminPlugin.adminAddress");
 
     // Parse Stage 1 config
-    testConfig.stage1.proposerAddress = vm.parseJsonAddress(json, ".stage1.proposerAddress");
+    testConfig.stage1.mode = vm.parseJsonString(json, ".stage1.mode");
+    testConfig.stage1.proposerHatId = vm.parseJsonUint(json, ".stage1.proposerHatId");
+    testConfig.stage1.controllerAddress = vm.parseJsonAddress(json, ".stage1.controllerAddress");
     testConfig.stage1.minAdvance = uint48(vm.parseJsonUint(json, ".stage1.minAdvance"));
     testConfig.stage1.maxAdvance = uint48(vm.parseJsonUint(json, ".stage1.maxAdvance"));
     testConfig.stage1.voteDuration = uint48(vm.parseJsonUint(json, ".stage1.voteDuration"));
@@ -139,58 +169,31 @@ abstract contract ApproverHatMinterSubDaoTestBase is BaseFactoryTest {
   }
 
   // ============================================
-  // HELPERS: Hat Management
+  // HELPERS: Deployment
   // ============================================
 
-  /// @notice Parse Hat IDs from main DAO factory (NOT from config!)
-  function _parseHatIdsFromConfig() internal {
-    // Query main DAO factory for hat IDs
-    VETokenVotingDaoFactory mainFactory = VETokenVotingDaoFactory(testConfig.mainDaoFactoryAddress);
-    uint256 proposerHat = mainFactory.getProposerHatId();
-    uint256 voterHat = mainFactory.getVoterHatId();
-    uint256 executorHat = mainFactory.getExecutorHatId();
+  /// @notice Load config and deploy SubDAO using the deployment script
+  /// @param configPath Relative path to config file (e.g., "config/subdaos/approver-hat-minter.json")
+  /// @param mainFactory Address of deployed main DAO factory
+  function loadConfigAndDeploy(string memory configPath, address mainFactory) internal {
+    // Load config for test verification
+    _loadTestConfig(configPath);
 
-    _parseHatIds(proposerHat, voterHat, executorHat);
-  }
-
-  /// @notice Deploy fresh main DAO for tests
-  /// @dev This ensures tests always use a main DAO factory with getter functions
-  /// @dev Call this after setupFork() and before deployFactoryAndSubdao()
-  /// @return mainFactory The deployed main DAO factory
-  function deployMainDao() internal returns (VETokenVotingDaoFactory mainFactory) {
-    // Deploy fresh main DAO
-    DeployDaoFromConfigScript script = new DeployDaoFromConfigScript();
-    mainFactory = script.execute();
-
-    // Parse hat IDs from the fresh factory
-    VETokenVotingDaoFactory mainFactoryInstance = VETokenVotingDaoFactory(address(mainFactory));
+    // Parse hat IDs from main DAO factory
+    VETokenVotingDaoFactory mainFactoryInstance = VETokenVotingDaoFactory(mainFactory);
     uint256 proposerHat = mainFactoryInstance.getProposerHatId();
     uint256 voterHat = mainFactoryInstance.getVoterHatId();
     uint256 executorHat = mainFactoryInstance.getExecutorHatId();
     _parseHatIds(proposerHat, voterHat, executorHat);
-  }
 
-  // ============================================
-  // HELPERS: Deployment (Using Script)
-  // ============================================
+    // Set config path for deployment script
+    vm.setEnv("CONFIG_PATH", configPath);
 
-  /// @notice Deploy factory and subDAO using the deployment script
-  /// @dev This runs the actual DeploySubDaoScript.execute() function
-  /// @dev NOTE: This creates a NEW script instance to ensure it's on the current fork
-  /// @param mainDaoFactoryOverride Optional main DAO factory address (if address(0), uses config)
-  /// @param mainDaoAddressOverride Optional main DAO address (if address(0), uses config)
-  /// @return Deployed factory instance
-  /// @return Deployed script instance
-  function deployFactoryAndSubdao(address mainDaoFactoryOverride, address mainDaoAddressOverride)
-    internal
-    returns (SubDaoFactory, DeploySubDaoScript)
-  {
     // Create a NEW script instance on the current fork
-    // (the one created in setUp() might be on a different fork)
     DeploySubDaoScript script = new DeploySubDaoScript();
 
-    // Execute the script with optional overrides (address(0) = use config)
-    factory = script.execute(mainDaoFactoryOverride, mainDaoAddressOverride);
+    // Execute the script
+    factory = script.execute(mainFactory, address(0));
 
     // Get deployment and store in state
     deployment = factory.getDeployment();
@@ -203,8 +206,62 @@ abstract contract ApproverHatMinterSubDaoTestBase is BaseFactoryTest {
 
     // Set up Hats Protocol infrastructure
     _setupHats();
+  }
 
-    return (factory, script);
+  /// @notice Deploy fresh main DAO for tests
+  /// @return mainFactory The deployed main DAO factory
+  function deployMainDao() internal returns (VETokenVotingDaoFactory mainFactory) {
+    // Ensure CONFIG_PATH points to main DAO config (integration tests may have changed it)
+    vm.setEnv("CONFIG_PATH", "config/deployment-config.json");
+
+    DeployDaoFromConfigScript script = new DeployDaoFromConfigScript();
+    mainFactory = script.execute();
+  }
+
+  /// @notice Deploy main DAO and extract escrow/ivotes for governance tests
+  /// @return mainFactory The deployed main DAO factory
+  function deployMainDaoWithEscrow() internal returns (VETokenVotingDaoFactory mainFactory) {
+    mainFactory = deployMainDao();
+
+    // Get main DAO deployment
+    MainDaoDeployment memory mainDeployment = mainFactory.getDeployment();
+
+    // Store escrow and ivotesAdapter for test use
+    escrow = mainDeployment.veSystem.votingEscrow;
+    ivotesAdapter = mainDeployment.veSystem.ivotesAdapter;
+  }
+
+  /// @notice Setup test users as EOAs with labels
+  function setupTestUsers() internal {
+    // Ensure test users are proper EOAs (not contracts)
+    vm.etch(alice, "");
+    vm.etch(bob, "");
+    vm.etch(charlie, "");
+
+    // Label for better trace readability
+    vm.label(alice, "alice");
+    vm.label(bob, "bob");
+    vm.label(charlie, "charlie");
+  }
+
+  /// @notice Create a lock for a user to give them voting power
+  /// @param user The user address
+  /// @param amount The amount to lock
+  /// @return lockId The created lock ID
+  function createLock(address user, uint256 amount) internal returns (uint256 lockId) {
+    // Get the token address
+    address tokenAddress = escrow.token();
+    IERC20 token = IERC20(tokenAddress);
+
+    // Deal tokens to user
+    vm.deal(user, amount * 2); // Give ETH for gas
+    deal(tokenAddress, user, amount);
+
+    // User approves escrow and creates lock
+    vm.startPrank(user);
+    token.approve(address(escrow), amount);
+    lockId = escrow.createLock(amount);
+    vm.stopPrank();
   }
 
   // ============================================
@@ -273,8 +330,45 @@ abstract contract ApproverHatMinterSubDaoTestBase is BaseFactoryTest {
     tokenVoting.vote(proposalId, voteOption, false);
   }
 
+  /// @notice Create a simple DAO metadata update proposal
+  /// @param proposer The address creating the proposal
+  /// @return proposalId The ID of the created proposal
+  function createMetadataProposal(address proposer) internal returns (uint256 proposalId) {
+    Action[] memory actions = new Action[](1);
+    actions[0] = Action({ to: address(dao), value: 0, data: abi.encodeWithSignature("setMetadata(bytes)", "ipfs://updated") });
+
+    proposalId = createSppProposal(proposer, "Update SubDAO Metadata", actions);
+  }
+
   // ============================================
-  // HELPERS: Config Access (Convenience)
+  // HELPERS: Deployment Assertions
+  // ============================================
+
+  /// @notice Run standard deployment checks (used by all deployment tests)
+  function assertStandardDeployment() internal {
+    assertTrue(address(factory) != address(0), "Factory should be deployed");
+    assertTrue(address(dao) != address(0), "DAO should be deployed");
+    assertTrue(address(tokenVoting) != address(0), "TokenVoting should be deployed");
+    assertTrue(address(adminPlugin) != address(0), "Admin plugin should be deployed");
+    assertTrue(address(sppPlugin) != address(0), "SPP plugin should be deployed");
+  }
+
+  /// @notice Assert deployment struct is populated
+  function assertDeploymentStructPopulated() internal {
+    assertTrue(address(deployment.dao) != address(0), "Deployment should have DAO");
+    assertTrue(address(deployment.adminPlugin) != address(0), "Deployment should have admin plugin");
+    assertTrue(address(deployment.tokenVotingPlugin) != address(0), "Deployment should have token voting");
+    assertTrue(deployment.sppPlugin != address(0), "Deployment should have SPP plugin");
+    assertTrue(deployment.hatsCondition != address(0), "Deployment should have HatsCondition");
+  }
+
+  /// @notice Assert factory version
+  function assertFactoryVersion(string memory expected) internal {
+    assertEq(factory.version(), expected, string.concat("Factory version should be ", expected));
+  }
+
+  // ============================================
+  // HELPERS: Config Access
   // ============================================
 
   /// @notice Get the test config (loaded directly by test base)

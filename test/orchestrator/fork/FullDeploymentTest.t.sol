@@ -21,7 +21,8 @@ contract FullDeploymentTest is BaseFactoryTest {
     function test_DeployMainDaoAndBothSubDaos() public {
         setupFork();
 
-        // Deploy main DAO
+        // Deploy main DAO (explicitly set CONFIG_PATH)
+        vm.setEnv("CONFIG_PATH", "config/deployment-config.json");
         DeployDaoFromConfigScript mainScript = new DeployDaoFromConfigScript();
         mainFactory = mainScript.execute();
         assertTrue(address(mainFactory) != address(0), "Main factory should be deployed");
@@ -48,7 +49,8 @@ contract FullDeploymentTest is BaseFactoryTest {
     function test_SubDaosShareIVotesAdapter() public {
         setupFork();
 
-        // Deploy all
+        // Deploy all (explicitly set CONFIG_PATH for main DAO)
+        vm.setEnv("CONFIG_PATH", "config/deployment-config.json");
         DeployDaoFromConfigScript mainScript = new DeployDaoFromConfigScript();
         mainFactory = mainScript.execute();
 
@@ -74,7 +76,8 @@ contract FullDeploymentTest is BaseFactoryTest {
     function test_SubDaosShareHatIds() public {
         setupFork();
 
-        // Deploy all
+        // Deploy all (explicitly set CONFIG_PATH for main DAO)
+        vm.setEnv("CONFIG_PATH", "config/deployment-config.json");
         DeployDaoFromConfigScript mainScript = new DeployDaoFromConfigScript();
         mainFactory = mainScript.execute();
 
@@ -114,7 +117,8 @@ contract FullDeploymentTest is BaseFactoryTest {
     function test_SubDaosHaveDifferentDaoAddresses() public {
         setupFork();
 
-        // Deploy all
+        // Deploy all (explicitly set CONFIG_PATH for main DAO)
+        vm.setEnv("CONFIG_PATH", "config/deployment-config.json");
         DeployDaoFromConfigScript mainScript = new DeployDaoFromConfigScript();
         mainFactory = mainScript.execute();
 
@@ -142,7 +146,8 @@ contract FullDeploymentTest is BaseFactoryTest {
     function test_SubDaosHaveDifferentVoteDurations() public {
         setupFork();
 
-        // Deploy all
+        // Deploy all (explicitly set CONFIG_PATH for main DAO)
+        vm.setEnv("CONFIG_PATH", "config/deployment-config.json");
         DeployDaoFromConfigScript mainScript = new DeployDaoFromConfigScript();
         mainFactory = mainScript.execute();
 

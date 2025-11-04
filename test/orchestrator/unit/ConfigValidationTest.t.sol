@@ -12,7 +12,7 @@ contract ConfigValidationTest is Test {
     struct SubDaoConfig {
         string metadataUri;
         string subdomain;
-        address proposerAddress;
+        address controllerAddress;
         uint256 stage2VoteDuration;
         uint256 stage2MinDuration;
     }
@@ -32,7 +32,7 @@ contract ConfigValidationTest is Test {
         string memory approverJson = vm.readFile(approverPath);
         approverConfig.metadataUri = vm.parseJsonString(approverJson, ".dao.metadataUri");
         approverConfig.subdomain = vm.parseJsonString(approverJson, ".dao.subdomain");
-        approverConfig.proposerAddress = vm.parseJsonAddress(approverJson, ".stage1.proposerAddress");
+        approverConfig.controllerAddress = vm.parseJsonAddress(approverJson, ".stage1.controllerAddress");
         approverConfig.stage2VoteDuration = vm.parseJsonUint(approverJson, ".stage2.voteDuration");
         approverConfig.stage2MinDuration = vm.parseJsonUint(approverJson, ".stage2.tokenVotingHats.minDuration");
 
@@ -41,7 +41,7 @@ contract ConfigValidationTest is Test {
         string memory memberJson = vm.readFile(memberPath);
         memberCuratorConfig.metadataUri = vm.parseJsonString(memberJson, ".dao.metadataUri");
         memberCuratorConfig.subdomain = vm.parseJsonString(memberJson, ".dao.subdomain");
-        memberCuratorConfig.proposerAddress = vm.parseJsonAddress(memberJson, ".stage1.proposerAddress");
+        memberCuratorConfig.controllerAddress = vm.parseJsonAddress(memberJson, ".stage1.controllerAddress");
         memberCuratorConfig.stage2VoteDuration = vm.parseJsonUint(memberJson, ".stage2.voteDuration");
         memberCuratorConfig.stage2MinDuration = vm.parseJsonUint(memberJson, ".stage2.tokenVotingHats.minDuration");
     }
@@ -49,7 +49,7 @@ contract ConfigValidationTest is Test {
     /// @notice Test that approver-hat-minter config is valid
     function test_ApproverConfigIsValid() public {
         assertTrue(bytes(approverConfig.metadataUri).length > 0, "Approver metadata URI should not be empty");
-        assertTrue(approverConfig.proposerAddress != address(0), "Approver proposer address should not be zero");
+        assertTrue(approverConfig.controllerAddress != address(0), "Approver controller address should not be zero");
         assertTrue(approverConfig.stage2VoteDuration > 0, "Approver stage2 vote duration should be positive");
         assertTrue(approverConfig.stage2MinDuration > 0, "Approver stage2 min duration should be positive");
     }
@@ -59,7 +59,7 @@ contract ConfigValidationTest is Test {
         assertTrue(bytes(memberCuratorConfig.metadataUri).length > 0, "Member-curator metadata URI should not be empty");
         // Subdomain can be empty (blank subdomains are valid)
         assertTrue(
-            memberCuratorConfig.proposerAddress != address(0), "Member-curator proposer address should not be zero"
+            memberCuratorConfig.controllerAddress != address(0), "Member-curator controller address should not be zero"
         );
         assertTrue(
             memberCuratorConfig.stage2VoteDuration > 0, "Member-curator stage2 vote duration should be positive"
@@ -88,11 +88,11 @@ contract ConfigValidationTest is Test {
         );
     }
 
-    /// @notice Test that both configs support different proposers (even if currently the same)
-    function test_ProposerAddressesConfigurable() public {
-        // This test verifies that proposer addresses are configured
+    /// @notice Test that both configs support different controllers (even if currently the same)
+    function test_ControllerAddressesConfigurable() public {
+        // This test verifies that controller addresses are configured
         // They CAN be the same or different - the system supports both
-        assertTrue(approverConfig.proposerAddress != address(0), "Approver proposer should be configured");
-        assertTrue(memberCuratorConfig.proposerAddress != address(0), "Member-curator proposer should be configured");
+        assertTrue(approverConfig.controllerAddress != address(0), "Approver controller should be configured");
+        assertTrue(memberCuratorConfig.controllerAddress != address(0), "Member-curator controller should be configured");
     }
 }

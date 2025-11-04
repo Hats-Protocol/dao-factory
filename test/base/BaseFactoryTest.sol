@@ -21,7 +21,7 @@ abstract contract BaseFactoryTest is Test {
 
   /// @notice Block number to fork at (0 = latest)
   /// @dev Override for deterministic forks, leave 0 for latest
-  uint256 internal forkBlockNumber = 0;
+  uint256 internal forkBlockNumber = 9556500;
 
   // ============================================
   // NETWORK-SPECIFIC ADDRESSES

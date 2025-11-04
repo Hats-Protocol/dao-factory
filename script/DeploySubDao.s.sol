@@ -103,7 +103,9 @@ contract DeploySubDaoScript is Script, DeploymentScriptHelpers {
     config.adminPlugin.adminAddress = vm.parseJsonAddress(json, ".adminPlugin.adminAddress");
 
     // Parse Stage 1 config
-    config.stage1.proposerAddress = vm.parseJsonAddress(json, ".stage1.proposerAddress");
+    config.stage1.mode = vm.parseJsonString(json, ".stage1.mode");
+    config.stage1.proposerHatId = vm.parseJsonUint(json, ".stage1.proposerHatId");
+    config.stage1.controllerAddress = vm.parseJsonAddress(json, ".stage1.controllerAddress");
     config.stage1.minAdvance = uint48(vm.parseJsonUint(json, ".stage1.minAdvance"));
     config.stage1.maxAdvance = uint48(vm.parseJsonUint(json, ".stage1.maxAdvance"));
     config.stage1.voteDuration = uint48(vm.parseJsonUint(json, ".stage1.voteDuration"));
@@ -236,6 +238,13 @@ contract DeploySubDaoScript is Script, DeploymentScriptHelpers {
     config.stage2.tokenVotingHats.proposerHatId = proposerHatId;
     config.stage2.tokenVotingHats.voterHatId = voterHatId;
     config.stage2.tokenVotingHats.executorHatId = executorHatId;
+
+    // Auto-query stage1.proposerHatId if not specified in config (0 = auto-query)
+    // Use proposer hat from main DAO for hat-based proposal creation
+    if (config.stage1.proposerHatId == 0 && keccak256(bytes(config.stage1.mode)) == keccak256(bytes("approve"))) {
+      config.stage1.proposerHatId = proposerHatId;
+      _log("Auto-setting stage1.proposerHatId from main DAO:", config.stage1.proposerHatId);
+    }
 
     _log("Main DAO factory data:");
     _log("  IVotesAdapter:", ivotesAdapter);

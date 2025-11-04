@@ -8,6 +8,7 @@ import { PluginRepoFactory } from "@aragon/osx/framework/plugin/repo/PluginRepoF
 import { PluginRepo } from "@aragon/osx/framework/plugin/repo/PluginRepo.sol";
 import { PermissionManager } from "@aragon/osx/core/permission/PermissionManager.sol";
 import { PermissionLib } from "@aragon/osx-commons-contracts/src/permission/PermissionLib.sol";
+import { IPermissionCondition } from "@aragon/osx-commons-contracts/src/permission/condition/IPermissionCondition.sol";
 import { Action } from "@aragon/osx-commons-contracts/src/executors/IExecutor.sol";
 import { IPluginSetup } from "@aragon/osx-commons-contracts/src/plugin/setup/IPluginSetup.sol";
 import { hashHelpers, PluginSetupRef } from "@aragon/osx/framework/plugin/setup/PluginSetupProcessorHelpers.sol";
@@ -33,9 +34,11 @@ struct AdminPluginConfig {
   address adminAddress;
 }
 
-/// @notice Stage 1 configuration (veto-voting stage)
+/// @notice Stage 1 configuration (veto or approve mode)
 struct Stage1Config {
-  address proposerAddress;
+  string mode; // "veto" or "approve"
+  uint256 proposerHatId; // If 0, use direct grant to controllerAddress. Otherwise use HatsCondition.
+  address controllerAddress; // Proposer in veto mode, approver in approve mode
   uint48 minAdvance;
   uint48 maxAdvance;
   uint48 voteDuration;
@@ -109,6 +112,7 @@ struct Deployment {
   PluginRepo tokenVotingPluginRepo;
   address sppPlugin;
   PluginRepo sppPluginRepo;
+  address hatsCondition; // HatsCondition from TokenVotingHats, used for SPP permissions
 }
 
 /**
@@ -127,6 +131,8 @@ contract SubDaoFactory {
   error AlreadyDeployed();
   error Unauthorized();
   error InvalidIVotesAdapterAddress();
+  error InvalidControllerAddress();
+  error InvalidStage1Mode();
 
   DeploymentParameters parameters;
   Deployment deployment;
@@ -169,6 +175,13 @@ contract SubDaoFactory {
 
     // Use IVotesAdapter from parameters (queried in deployment script)
     if (parameters.ivotesAdapter == address(0)) revert InvalidIVotesAdapterAddress();
+
+    // Validate Stage 1 configuration
+    if (parameters.stage1.controllerAddress == address(0)) revert InvalidControllerAddress();
+    bytes32 modeHash = keccak256(bytes(parameters.stage1.mode));
+    if (modeHash != keccak256(bytes("veto")) && modeHash != keccak256(bytes("approve"))) {
+      revert InvalidStage1Mode();
+    }
 
     // Install TokenVotingHats plugin (for Stage 2)
     (TokenVotingHats tvPlugin, PluginRepo tvRepo) = _installTokenVotingHats(dao, parameters.ivotesAdapter);
@@ -297,6 +310,11 @@ contract SubDaoFactory {
       );
 
     plugin = TokenVotingHats(pluginAddress);
+
+    // Store HatsCondition (helpers[0]) for use in SPP permission grants
+    if (preparedSetupData.helpers.length > 0) {
+      deployment.hatsCondition = preparedSetupData.helpers[0];
+    }
   }
 
   function _installSppPlugin(DAO dao, address tokenVotingHatsPlugin)
@@ -352,13 +370,20 @@ contract SubDaoFactory {
     // Create 2-stage array
     StagedProposalProcessor.Stage[] memory stages = new StagedProposalProcessor.Stage[](2);
 
-    // Stage 1: Manual approval by proposer address
+    // Stage 1: Manual veto or approval by controller address
+    // Mode determines ResultType and thresholds:
+    // - "veto" mode: default allow, controller can block (approvalThreshold=0, vetoThreshold=1)
+    // - "approve" mode: default block, controller must approve (approvalThreshold=1, vetoThreshold=0)
+    bool isApproveMode = keccak256(bytes(parameters.stage1.mode)) == keccak256(bytes("approve"));
+
     StagedProposalProcessor.Body[] memory stage1Bodies = new StagedProposalProcessor.Body[](1);
     stage1Bodies[0] = StagedProposalProcessor.Body({
-      addr: parameters.stage1.proposerAddress,
+      addr: parameters.stage1.controllerAddress,
       isManual: true,
-      tryAdvance: true,
-      resultType: StagedProposalProcessor.ResultType.Veto
+      tryAdvance: true, // Advance immediately on approval (both modes)
+      resultType: isApproveMode
+        ? StagedProposalProcessor.ResultType.Approval
+        : StagedProposalProcessor.ResultType.Veto
     });
 
     stages[0] = StagedProposalProcessor.Stage({
@@ -366,8 +391,8 @@ contract SubDaoFactory {
       maxAdvance: uint64(parameters.stage1.maxAdvance),
       minAdvance: uint64(parameters.stage1.minAdvance),
       voteDuration: uint64(parameters.stage1.voteDuration),
-      approvalThreshold: 0,
-      vetoThreshold: 1,
+      approvalThreshold: isApproveMode ? uint16(1) : uint16(0),
+      vetoThreshold: isApproveMode ? uint16(0) : uint16(1),
       cancelable: true,
       editable: true
     });
@@ -414,12 +439,23 @@ contract SubDaoFactory {
 
     // Step 1: Revoke the broad CREATE_PROPOSAL permission granted by setup to ANY_ADDR
     // The setup grants this with a RuledCondition, but since we're using empty rules,
-    // it effectively allows anyone. We revoke it to restrict to proposerAddress only.
+    // it effectively allows anyone. We revoke it to restrict permissions.
     dao.revoke(sppPlugin, ANY_ADDR, CREATE_PROPOSAL_PERMISSION_ID);
 
-    // Step 2: Grant CREATE_PROPOSAL permission directly to proposerAddress only
-    // This ensures only the designated proposer can create proposals
-    dao.grant(sppPlugin, parameters.stage1.proposerAddress, CREATE_PROPOSAL_PERMISSION_ID);
+    // Step 2: Grant CREATE_PROPOSAL permission based on proposerHatId configuration
+    if (parameters.stage1.proposerHatId != 0) {
+      // Hat-based permissions: Any address wearing the proposer hat can create proposals
+      // Use HatsCondition from TokenVotingHats to check hat eligibility
+      dao.grantWithCondition(
+        sppPlugin,
+        ANY_ADDR,
+        CREATE_PROPOSAL_PERMISSION_ID,
+        IPermissionCondition(deployment.hatsCondition)
+      );
+    } else {
+      // Direct grant: Only controllerAddress can create proposals
+      dao.grant(sppPlugin, parameters.stage1.controllerAddress, CREATE_PROPOSAL_PERMISSION_ID);
+    }
 
     // Step 3: Grant SPP permission to create proposals in TokenVotingHats for Stage 2
     // This allows SPP to create sub-proposals when advancing to the voting stage

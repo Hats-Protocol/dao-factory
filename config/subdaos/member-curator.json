@@ -11,10 +11,12 @@
     "adminAddress": "0x624123ec4A9f48Be7AA8a307a74381E4ea7530D4"
   },
   "stage1": {
-    "proposerAddress": "0x2D7473039D40d26789981c907AbE9D37bf463e4E",
-    "minAdvance": 3600,
+    "mode": "approve",
+    "proposerHatId": 0,
+    "controllerAddress": "0x2D7473039D40d26789981c907AbE9D37bf463e4E",
+    "minAdvance": 0,
     "maxAdvance": 3155760000,
-    "voteDuration": 3600
+    "voteDuration": 604800
   },
   "stage2": {
     "tokenVotingHats": {

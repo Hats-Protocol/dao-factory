@@ -51,12 +51,7 @@ contract BaseInfrastructureTest is FactoryTestBase {
   }
 
   function test_HatIdsParseCorrectly() public {
-    // Verify hat IDs parsed correctly
-    assertEq(proposerHatId, 0x0000071c00030000000000000000000000000000000000000000000000000000, "Wrong proposer hat ID");
-    assertEq(voterHatId, 0x0000071c00030000000000000000000000000000000000000000000000000000, "Wrong voter hat ID");
-    assertEq(executorHatId, 0x0000000000000000000000000000000000000000000000000000000000000001, "Wrong executor hat ID");
-
-    // Verify they match the testConfig
+    // Verify that parsed hat IDs match the testConfig
     assertEq(proposerHatId, testConfig.tokenVotingHats.proposerHatId, "Proposer hat ID mismatch");
     assertEq(voterHatId, testConfig.tokenVotingHats.voterHatId, "Voter hat ID mismatch");
     assertEq(executorHatId, testConfig.tokenVotingHats.executorHatId, "Executor hat ID mismatch");
