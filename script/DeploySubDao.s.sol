@@ -30,7 +30,8 @@ import { VETokenVotingDaoFactory } from "../src/VETokenVotingDaoFactory.sol";
  * @title DeploySubDaoScript
  * @notice Generic deployment script for SubDAOs
  * @dev Run with: forge script script/DeploySubDao.s.sol --rpc-url sepolia --broadcast --verify
- * @dev Configuration loaded from JSON file specified by CONFIG_PATH env var (default: config/subdaos/approver-hat-minter.json)
+ * @dev Configuration loaded from JSON file specified by CONFIG_PATH env var (default:
+ * config/subdaos/approver-hat-minter.json)
  * @dev Requires PRIVATE_KEY environment variable to be set
  */
 contract DeploySubDaoScript is Script, DeploymentScriptHelpers {
@@ -195,7 +196,7 @@ contract DeploySubDaoScript is Script, DeploymentScriptHelpers {
     try vm.envAddress(key) returns (address value) {
       return value;
     } catch {
-      return address(0);  // Falls back to config value in execute()
+      return address(0); // Falls back to config value in execute()
     }
   }
 

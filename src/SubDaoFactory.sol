@@ -381,9 +381,7 @@ contract SubDaoFactory {
       addr: parameters.stage1.controllerAddress,
       isManual: true,
       tryAdvance: true, // Advance immediately on approval (both modes)
-      resultType: isApproveMode
-        ? StagedProposalProcessor.ResultType.Approval
-        : StagedProposalProcessor.ResultType.Veto
+      resultType: isApproveMode ? StagedProposalProcessor.ResultType.Approval : StagedProposalProcessor.ResultType.Veto
     });
 
     stages[0] = StagedProposalProcessor.Stage({
@@ -447,10 +445,7 @@ contract SubDaoFactory {
       // Hat-based permissions: Any address wearing the proposer hat can create proposals
       // Use HatsCondition from TokenVotingHats to check hat eligibility
       dao.grantWithCondition(
-        sppPlugin,
-        ANY_ADDR,
-        CREATE_PROPOSAL_PERMISSION_ID,
-        IPermissionCondition(deployment.hatsCondition)
+        sppPlugin, ANY_ADDR, CREATE_PROPOSAL_PERMISSION_ID, IPermissionCondition(deployment.hatsCondition)
       );
     } else {
       // Direct grant: Only controllerAddress can create proposals

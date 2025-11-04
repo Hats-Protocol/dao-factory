@@ -57,7 +57,9 @@ contract VetoModeDeployment is SubDaoTestBase {
 
     // Verify controller has CREATE_PROPOSAL permission
     assertTrue(
-      dao.hasPermission(address(sppPlugin), testConfig.stage1.controllerAddress, CREATE_PROPOSAL_PERMISSION_ID, bytes("")),
+      dao.hasPermission(
+        address(sppPlugin), testConfig.stage1.controllerAddress, CREATE_PROPOSAL_PERMISSION_ID, bytes("")
+      ),
       "Controller should have CREATE_PROPOSAL permission"
     );
 

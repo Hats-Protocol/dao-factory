@@ -335,7 +335,8 @@ abstract contract SubDaoTestBase is BaseFactoryTest {
   /// @return proposalId The ID of the created proposal
   function createMetadataProposal(address proposer) internal returns (uint256 proposalId) {
     Action[] memory actions = new Action[](1);
-    actions[0] = Action({ to: address(dao), value: 0, data: abi.encodeWithSignature("setMetadata(bytes)", "ipfs://updated") });
+    actions[0] =
+      Action({ to: address(dao), value: 0, data: abi.encodeWithSignature("setMetadata(bytes)", "ipfs://updated") });
 
     proposalId = createSppProposal(proposer, "Update SubDAO Metadata", actions);
   }

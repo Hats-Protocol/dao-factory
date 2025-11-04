@@ -45,9 +45,7 @@ contract BothSubDaosDeployment is BaseFactoryTest {
     assertTrue(address(memberCuratorFactory) != address(0), "Member-curator factory should be deployed");
 
     // Verify both factories deployed successfully
-    assertNotEq(
-      address(approverFactory), address(memberCuratorFactory), "Factory addresses should be different"
-    );
+    assertNotEq(address(approverFactory), address(memberCuratorFactory), "Factory addresses should be different");
   }
 
   /// @notice Test that both SubDAOs share the same IVotesAdapter from main DAO
@@ -99,8 +97,7 @@ contract BothSubDaosDeployment is BaseFactoryTest {
     uint256 mainVoterHat = mainFactory.getVoterHatId();
     uint256 mainExecutorHat = mainFactory.getExecutorHatId();
 
-    uint256 approverProposerHat =
-      approverFactory.getDeploymentParameters().stage2.tokenVotingHats.proposerHatId;
+    uint256 approverProposerHat = approverFactory.getDeploymentParameters().stage2.tokenVotingHats.proposerHatId;
     uint256 approverVoterHat = approverFactory.getDeploymentParameters().stage2.tokenVotingHats.voterHatId;
     uint256 approverExecutorHat = approverFactory.getDeploymentParameters().stage2.tokenVotingHats.executorHatId;
 
@@ -141,9 +138,7 @@ contract BothSubDaosDeployment is BaseFactoryTest {
 
     // Verify different DAO addresses
     assertNotEq(
-      address(approverDeployment.dao),
-      address(memberDeployment.dao),
-      "SubDAOs should have different DAO addresses"
+      address(approverDeployment.dao), address(memberDeployment.dao), "SubDAOs should have different DAO addresses"
     );
   }
 
@@ -228,6 +223,8 @@ contract BothSubDaosDeployment is BaseFactoryTest {
 
     // Note: They won't be the SAME address because each SubDAO deploys its own TokenVotingHats
     // But they should both be valid HatsCondition contracts
-    assertNotEq(approverHatsCondition, memberHatsCondition, "Each SubDAO has its own HatsCondition (from its own TokenVotingHats)");
+    assertNotEq(
+      approverHatsCondition, memberHatsCondition, "Each SubDAO has its own HatsCondition (from its own TokenVotingHats)"
+    );
   }
 }
