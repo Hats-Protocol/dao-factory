@@ -6,11 +6,11 @@
     "subdomain": ""
   },
   "veSystem": {
-    "underlyingToken": "0x4e15661a87b668956f059de301c6570f3ffcaa86",
+    "underlyingToken": "0x32a6f41dd086e178dEBC5bb6B3bc0E813fBFf0f9",
     "minDeposit": "1000000000000000000",
-    "veTokenName": "Vote Escrowed TEST",
-    "veTokenSymbol": "veTEST",
-    "minLockDuration": 15724800,
+    "veTokenName": "Vote Escrowed TEST2",
+    "veTokenSymbol": "veTEST2",
+    "minLockDuration": 31449600,
     "feePercent": 0,
     "cooldownPeriod": 0
   },
@@ -25,9 +25,9 @@
     "startPaused": false
   },
   "tokenVotingHats": {
-    "votingMode": "Standard",
+    "votingMode": "EarlyExecution",
     "supportThreshold": 500000,
-    "minParticipation": 150000,
+    "minParticipation": 50000,
     "minDuration": 3600,
     "minProposerVotingPower": "0",
     "proposerHatId": "0x0000071e00030001000000000000000000000000000000000000000000000000",
