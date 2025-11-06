@@ -109,4 +109,17 @@ contract ApproveModeDeployment is SubDaoTestBase {
   function test_DeploymentStructIsPopulated() public {
     assertDeploymentStructPopulated();
   }
+
+  /// @notice Test that main DAO has ROOT_PERMISSION on SubDAO
+  function test_MainDaoHasRootPermission() public {
+    // Get the main DAO address from the factory
+    address mainDaoAddress = mainFactory.getDao();
+
+    // Verify main DAO has ROOT_PERMISSION on SubDAO
+    bytes32 ROOT_PERMISSION_ID = dao.ROOT_PERMISSION_ID();
+    assertTrue(
+      dao.hasPermission(address(dao), mainDaoAddress, ROOT_PERMISSION_ID, bytes("")),
+      "Main DAO should have ROOT_PERMISSION on SubDAO"
+    );
+  }
 }

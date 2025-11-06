@@ -64,7 +64,7 @@ abstract contract FactoryTestBase is BaseFactoryTest {
     vm.setEnv("CONFIG_PATH", "config/deployment-config.json");
 
     // Set fork block number for VE tests (matches BaseFactoryTest default)
-    forkBlockNumber = 9_556_500;
+    forkBlockNumber = 9_561_700;
 
     // Load config directly in test (before script runs)
     _loadTestConfig();

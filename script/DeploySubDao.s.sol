@@ -73,6 +73,7 @@ contract DeploySubDaoScript is Script, DeploymentScriptHelpers {
 
   /// @notice Small struct to pass main DAO values to _deployFactory without stack depth issues
   struct MainDaoData {
+    address daoAddress;
     address ivotesAdapter;
     address tokenVotingPluginRepo;
     uint8 pluginRepoRelease;
@@ -150,6 +151,7 @@ contract DeploySubDaoScript is Script, DeploymentScriptHelpers {
   }
 
   /// @notice Load main DAO deployment data from the deployed factory via getter functions
+  /// @return mainDaoAddress The main DAO address
   /// @return ivotesAdapter The IVotesAdapter address
   /// @return tokenVotingPluginRepo The TokenVoting plugin repo address
   /// @return proposerHatId The proposer hat ID
@@ -162,6 +164,7 @@ contract DeploySubDaoScript is Script, DeploymentScriptHelpers {
     internal
     view
     returns (
+      address mainDaoAddress,
       address ivotesAdapter,
       address tokenVotingPluginRepo,
       uint256 proposerHatId,
@@ -178,6 +181,7 @@ contract DeploySubDaoScript is Script, DeploymentScriptHelpers {
     VETokenVotingDaoFactory mainFactory = VETokenVotingDaoFactory(config.mainDaoFactoryAddress);
 
     // Query via getter functions (no more config!)
+    mainDaoAddress = mainFactory.getDao();
     ivotesAdapter = mainFactory.getIVotesAdapter();
     tokenVotingPluginRepo = mainFactory.getTokenVotingPluginRepo();
     tokenVotingSetup = mainFactory.getTokenVotingSetup();
@@ -225,6 +229,7 @@ contract DeploySubDaoScript is Script, DeploymentScriptHelpers {
 
     // Load main DAO factory data via getter functions
     (
+      address mainDaoAddress,
       address ivotesAdapter,
       address tokenVotingPluginRepo,
       uint256 proposerHatId,
@@ -258,7 +263,7 @@ contract DeploySubDaoScript is Script, DeploymentScriptHelpers {
 
     // ===== STEP 1 & 2: Deploy Plugin Setups and Factory =====
     factory = _deployPluginSetupsAndFactory(
-      tokenVotingSetup, ivotesAdapter, tokenVotingPluginRepo, pluginRepoRelease, pluginRepoBuild
+      mainDaoAddress, tokenVotingSetup, ivotesAdapter, tokenVotingPluginRepo, pluginRepoRelease, pluginRepoBuild
     );
 
     // ===== STEP 3: Deploy the SubDAO =====
@@ -288,6 +293,7 @@ contract DeploySubDaoScript is Script, DeploymentScriptHelpers {
   /// @notice Deploys all plugin setup contracts
   /// @notice Deploys plugin setups and factory in one function to avoid stack depth issues
   function _deployPluginSetupsAndFactory(
+    address mainDaoAddress,
     TokenVotingSetupHats mainDaoTokenVotingSetup,
     address ivotesAdapter,
     address tokenVotingPluginRepo,
@@ -300,6 +306,7 @@ contract DeploySubDaoScript is Script, DeploymentScriptHelpers {
     (newTokenVotingSetup, adminSetup, sppPluginSetup) = _deployPluginSetups(mainDaoTokenVotingSetup);
 
     MainDaoData memory mainDaoData = MainDaoData({
+      daoAddress: mainDaoAddress,
       ivotesAdapter: ivotesAdapter,
       tokenVotingPluginRepo: tokenVotingPluginRepo,
       pluginRepoRelease: pluginRepoRelease,
@@ -379,6 +386,8 @@ contract DeploySubDaoScript is Script, DeploymentScriptHelpers {
       stage1: config.stage1,
       stage2: config.stage2,
       sppPlugin: config.sppPlugin,
+      // Main DAO address (for ROOT_PERMISSION grant)
+      mainDaoAddress: mainDaoData.daoAddress,
       // IVotesAdapter queried from main DAO factory
       ivotesAdapter: mainDaoData.ivotesAdapter,
       // Plugin setup contracts

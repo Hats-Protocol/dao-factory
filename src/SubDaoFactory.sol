@@ -82,6 +82,9 @@ struct DeploymentParameters {
   Stage2Config stage2;
   SppPluginConfig sppPlugin;
 
+  // Main DAO address (to grant ROOT_PERMISSION for plugin management)
+  address mainDaoAddress;
+
   // IVotesAdapter address (queried from main DAO factory in deployment script)
   address ivotesAdapter;
 
@@ -130,6 +133,7 @@ contract SubDaoFactory {
 
   error AlreadyDeployed();
   error Unauthorized();
+  error InvalidMainDaoAddress();
   error InvalidIVotesAdapterAddress();
   error InvalidControllerAddress();
   error InvalidStage1Mode();
@@ -145,6 +149,7 @@ contract SubDaoFactory {
     parameters.stage1 = _parameters.stage1;
     parameters.stage2 = _parameters.stage2;
     parameters.sppPlugin = _parameters.sppPlugin;
+    parameters.mainDaoAddress = _parameters.mainDaoAddress;
     parameters.ivotesAdapter = _parameters.ivotesAdapter;
     parameters.tokenVotingSetup = _parameters.tokenVotingSetup;
     parameters.tokenVotingPluginRepo = _parameters.tokenVotingPluginRepo;
@@ -162,6 +167,9 @@ contract SubDaoFactory {
   function deployOnce() public {
     if (msg.sender != deployer) revert Unauthorized();
     if (address(deployment.dao) != address(0)) revert AlreadyDeployed();
+
+    // Validate main DAO address
+    if (parameters.mainDaoAddress == address(0)) revert InvalidMainDaoAddress();
 
     DAO dao = _prepareDao();
     deployment.dao = dao;
@@ -192,6 +200,9 @@ contract SubDaoFactory {
     (address sppPlugin, PluginRepo sppRepo) = _installSppPlugin(dao, address(tvPlugin));
     deployment.sppPlugin = sppPlugin;
     deployment.sppPluginRepo = sppRepo;
+
+    // Grant main DAO ROOT_PERMISSION on SubDAO for plugin management
+    _grantMainDaoPermissions(dao);
 
     _revokeApplyInstallationPermissions(dao);
     _revokeOwnerPermission(dao);
@@ -458,6 +469,12 @@ contract SubDaoFactory {
 
     // Grant EXECUTE_PROPOSAL permission to SPP plugin so it can execute on the DAO
     dao.grant(address(dao), sppPlugin, EXECUTE_PROPOSAL_PERMISSION_ID);
+  }
+
+  function _grantMainDaoPermissions(DAO dao) internal {
+    // Grant main DAO ROOT_PERMISSION on SubDAO
+    // This allows main DAO to install/uninstall plugins and manage all SubDAO permissions
+    dao.grant(address(dao), parameters.mainDaoAddress, dao.ROOT_PERMISSION_ID());
   }
 
   function _grantApplyInstallationPermissions(DAO dao) internal {

@@ -76,7 +76,7 @@ If env vars not set, child scripts fall back to values in config files.
 
 ```bash
 # Terminal 1: Start local fork
-anvil --fork-url $SEPOLIA_RPC_URL
+anvil --fork-url <NETWORK>
 
 # Terminal 2: Run full deployment
 forge script script/orchestrator/01_DeployMainDao.s.sol --rpc-url local --broadcast
@@ -150,19 +150,16 @@ These are **NOT** in SubDAO configs - they're read from the main DAO factory:
 ## Deployment Process
 
 <NETWORK> can be:
-- sepolia
-- mainnet
-- local (for testing with anvil - see [Dry Run section](#dry-run-simulation))
+- `sepolia`
+- `mainnet`
+- `local` (for testing with anvil - see [Dry Run section](#dry-run-simulation))
 
 **💡 Tip**: Before deploying to a real network, test the full flow using the [anvil dry run approach](#dry-run-simulation) to catch errors without spending gas.
 
 ### Step 1: Deploy Main DAO
 
 ```bash
-forge script script/orchestrator/01_DeployMainDao.s.sol --rpc-url <NETWORK> \
-  --broadcast \
-  --verify \
-  -vvv
+forge script script/orchestrator/01_DeployMainDao.s.sol --rpc-url <NETWORK> --broadcast --verify -vvv
 ```
 
 #### What This Does:
@@ -336,10 +333,7 @@ Please clean up before deploying:
 **⚠️ Only proceed if ALL verification checks passed AND artifacts cleaned up**
 
 ```bash
-forge script script/orchestrator/02_DeploySubDaos.s.sol --rpc-url <NETWORK> \
-  --broadcast \
-  --verify \
-  -vvv
+forge script script/orchestrator/02_DeploySubDaos.s.sol --rpc-url <NETWORK> --broadcast --verify -vvv
 ```
 
 #### What This Does:

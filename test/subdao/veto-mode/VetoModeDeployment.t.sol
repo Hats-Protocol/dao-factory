@@ -12,10 +12,12 @@ import { StagedProposalProcessor } from "staged-proposal-processor-plugin/Staged
  * @dev Verifies factory configuration and component setup for veto mode
  */
 contract VetoModeDeployment is SubDaoTestBase {
+  VETokenVotingDaoFactory internal mainFactory;
+
   function setUp() public override {
     super.setUp();
     setupFork();
-    VETokenVotingDaoFactory mainFactory = deployMainDao();
+    mainFactory = deployMainDao();
     loadConfigAndDeploy("config/subdaos/approver-hat-minter.json", address(mainFactory));
   }
 
@@ -89,5 +91,18 @@ contract VetoModeDeployment is SubDaoTestBase {
   /// @notice Test that deployment struct is populated
   function test_DeploymentStructIsPopulated() public {
     assertDeploymentStructPopulated();
+  }
+
+  /// @notice Test that main DAO has ROOT_PERMISSION on SubDAO
+  function test_MainDaoHasRootPermission() public {
+    // Get the main DAO address from the factory
+    address mainDaoAddress = mainFactory.getDao();
+
+    // Verify main DAO has ROOT_PERMISSION on SubDAO
+    bytes32 ROOT_PERMISSION_ID = dao.ROOT_PERMISSION_ID();
+    assertTrue(
+      dao.hasPermission(address(dao), mainDaoAddress, ROOT_PERMISSION_ID, bytes("")),
+      "Main DAO should have ROOT_PERMISSION on SubDAO"
+    );
   }
 }

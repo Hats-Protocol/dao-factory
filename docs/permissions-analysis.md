@@ -1,6 +1,6 @@
 # DAO Factory Permissions Analysis
 
-**Generated**: 2025-11-03
+**Generated**: 2025-11-04
 **System Version**: 1.0.0
 **Network**: Sepolia (deployed configuration)
 
@@ -91,6 +91,10 @@ Each SubDAO has:
 - Hat IDs (governance permissions)
 - HatsCondition (permission validation)
 
+**Main DAO Control:**
+- Main DAO has `ROOT_PERMISSION_ID` on each SubDAO
+- This grants the main DAO full control to install/uninstall plugins and manage all SubDAO permissions
+
 ### 2.2 Stage 1 (SPP) Permissions by Mode
 
 **Veto Mode** (e.g., approver-hat-minter):
@@ -117,7 +121,17 @@ Same as main DAO TokenVotingHats:
 - Admin address → Admin plugin: `EXECUTE_PROPOSAL_PERMISSION_ID`
 - Admin plugin → SubDAO: `EXECUTE_PERMISSION_ID`
 
-### 2.5 Configuration Examples
+### 2.5 Main DAO Control Over SubDAOs
+
+Each SubDAO grants `ROOT_PERMISSION_ID` to the main DAO during deployment:
+- **Where**: SubDAO (on itself)
+- **Who**: Main DAO address
+- **Purpose**: Enables main DAO to install/uninstall plugins and manage all SubDAO permissions
+- **Use Case**: Allows main DAO governance to upgrade or modify SubDAO functionality without requiring SubDAO governance approval
+
+This creates a hierarchical governance structure where the main DAO has ultimate control over all SubDAOs while each SubDAO operates independently for day-to-day governance.
+
+### 2.6 Configuration Examples
 
 #### Approver Hat Minter (Veto Mode)
 - **Purpose**: Default-allow governance with controller veto
@@ -195,6 +209,13 @@ Same as main DAO TokenVotingHats:
 
 ### 3.5 SubDAO Detailed Permissions
 
+**Main DAO Root Permission:**
+- Where: SubDAO
+- Who: Main DAO address
+- Permission: `ROOT_PERMISSION_ID`
+- Purpose: Allows main DAO to install/uninstall plugins on SubDAO and manage all SubDAO permissions
+- Granted: During SubDAO deployment by SubDaoFactory
+
 **Stage 1 (SPP) CREATE_PROPOSAL Grant:**
 
 *Veto Mode:*
@@ -231,15 +252,16 @@ Same as main DAO TokenVotingHats:
 - Admin plugin permissions: 3
 - Internal component permissions: 3
 
-**Per SubDAO**: ~15 active permissions post-deployment
+**Per SubDAO**: ~16 active permissions post-deployment
+- Main DAO ROOT_PERMISSION: 1
 - SPP permissions: 3
 - TokenVotingHats permissions: 6
 - Admin plugin permissions: 2
 - SubDAO self-permissions: 4
 
-**Total for system with 2 SubDAOs**: ~62 active permissions
+**Total for system with 2 SubDAOs**: ~64 active permissions
 
 ---
 
-**Document Version**: 2.0
-**Last Updated**: 2025-11-03
+**Document Version**: 2.1
+**Last Updated**: 2025-11-04

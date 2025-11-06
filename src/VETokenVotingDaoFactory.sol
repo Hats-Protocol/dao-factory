@@ -421,4 +421,8 @@ contract VETokenVotingDaoFactory {
   function getTokenVotingSetup() public view returns (TokenVotingSetupHats) {
     return parameters.tokenVotingSetup;
   }
+
+  function getDao() public view returns (address) {
+    return address(deployment.dao);
+  }
 }
