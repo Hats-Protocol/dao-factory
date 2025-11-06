@@ -60,8 +60,11 @@ abstract contract FactoryTestBase is BaseFactoryTest {
   // ============================================
 
   function setUp() public virtual {
-    // Set fork block number for VE tests
-    forkBlockNumber = 9_504_000;
+    // Reset CONFIG_PATH to default to prevent pollution from previous tests
+    vm.setEnv("CONFIG_PATH", "config/deployment-config.json");
+
+    // Set fork block number for VE tests (matches BaseFactoryTest default)
+    forkBlockNumber = 9_561_700;
 
     // Load config directly in test (before script runs)
     _loadTestConfig();

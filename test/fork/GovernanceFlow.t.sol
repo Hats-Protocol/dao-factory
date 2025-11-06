@@ -205,10 +205,10 @@ contract GovernanceFlowTest is FactoryTestBase {
   }
 
   // ============================================
-  // Test 4: Cannot Execute Before MinDuration
+  // Test 4: Execution Timing Respects Mode and Duration
   // ============================================
 
-  function test_CannotExecuteBeforeMinDuration() public {
+  function test_ExecutionTimingRespectsModeAndDuration() public {
     // Setup participants
     _setupDaoMember(alice, STANDARD_LOCK_AMOUNT);
     _setupDaoMember(bob, STANDARD_LOCK_AMOUNT);
@@ -226,29 +226,51 @@ contract GovernanceFlowTest is FactoryTestBase {
     vm.prank(bob);
     tokenVoting.vote(proposalId, IMajorityVoting.VoteOption.Yes, false);
 
-    // Try to execute immediately (should fail - minDuration not passed)
-    assertFalse(tokenVoting.canExecute(proposalId), "Proposal should not be executable before minDuration");
+    // Check votingMode from config to determine expected behavior
+    bytes32 votingModeHash = keccak256(bytes(testConfig.tokenVotingHats.votingMode));
+    bool isEarlyExecution = votingModeHash == keccak256(bytes("EarlyExecution"));
 
-    vm.expectRevert();
-    vm.prank(charlie);
-    tokenVoting.execute(proposalId);
+    if (isEarlyExecution) {
+      // EarlyExecution mode: Proposal should be executable immediately with sufficient votes
+      assertTrue(tokenVoting.canExecute(proposalId), "Proposal should be executable immediately in EarlyExecution mode");
 
-    // Wait half the duration (still not enough)
-    vm.warp(block.timestamp + testConfig.tokenVotingHats.minDuration / 2);
+      vm.prank(charlie);
+      tokenVoting.execute(proposalId);
 
-    assertFalse(tokenVoting.canExecute(proposalId), "Proposal should not be executable at half minDuration");
+      // Verify execution succeeded
+      assertFalse(
+        tokenVoting.canExecute(proposalId), "Proposal should no longer be executable after execution"
+      );
+    } else {
+      // Standard or VoteReplacement mode: Must wait for minDuration
+      // Try to execute immediately (should fail - minDuration not passed)
+      assertFalse(
+        tokenVoting.canExecute(proposalId), "Proposal should not be executable before minDuration in Standard mode"
+      );
 
-    vm.expectRevert();
-    vm.prank(charlie);
-    tokenVoting.execute(proposalId);
+      vm.expectRevert();
+      vm.prank(charlie);
+      tokenVoting.execute(proposalId);
 
-    // Wait full duration + 1 second (now it should work)
-    vm.warp(block.timestamp + testConfig.tokenVotingHats.minDuration / 2 + 1);
+      // Wait half the duration (still not enough)
+      vm.warp(block.timestamp + testConfig.tokenVotingHats.minDuration / 2);
 
-    assertTrue(tokenVoting.canExecute(proposalId), "Proposal should be executable after minDuration");
+      assertFalse(
+        tokenVoting.canExecute(proposalId), "Proposal should not be executable at half minDuration in Standard mode"
+      );
 
-    vm.prank(charlie);
-    tokenVoting.execute(proposalId);
+      vm.expectRevert();
+      vm.prank(charlie);
+      tokenVoting.execute(proposalId);
+
+      // Wait full duration + 1 second (now it should work)
+      vm.warp(block.timestamp + testConfig.tokenVotingHats.minDuration / 2 + 1);
+
+      assertTrue(tokenVoting.canExecute(proposalId), "Proposal should be executable after minDuration in Standard mode");
+
+      vm.prank(charlie);
+      tokenVoting.execute(proposalId);
+    }
   }
 
   // ============================================

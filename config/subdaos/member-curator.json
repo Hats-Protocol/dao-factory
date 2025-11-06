@@ -1,0 +1,40 @@
+{
+  "version": "1.0.0",
+  "network": "sepolia",
+  "dao": {
+    "metadataUri": "ipfs://QmNPD7uiV1khyHGB64PcdrqwZfWG5mPBRva4nHA6mF1Pgc",
+    "subdomain": ""
+  },
+  "mainDaoAddress": "0x126a64d234Fec51eFa80D38dA6F6d6081c4149fd",
+  "mainDaoFactoryAddress": "0x0f905a89238bbcf3071aee9dd85fdcc48ffd4df5",
+  "adminPlugin": {
+    "adminAddress": "0x624123ec4A9f48Be7AA8a307a74381E4ea7530D4"
+  },
+  "stage1": {
+    "mode": "approve",
+    "proposerHatId": 0,
+    "controllerAddress": "0x2D7473039D40d26789981c907AbE9D37bf463e4E",
+    "minAdvance": 0,
+    "maxAdvance": 3155760000,
+    "voteDuration": 604800
+  },
+  "stage2": {
+    "tokenVotingHats": {
+      "votingMode": "Standard",
+      "supportThreshold": 0,
+      "minParticipation": 0,
+      "minDuration": 86400,
+      "minProposerVotingPower": "0"
+    },
+    "minAdvance": 86400,
+    "maxAdvance": 3155760000,
+    "voteDuration": 86400
+  },
+  "_comment_sppPlugin": "SPP plugin repository address is fetched programmatically from staged-proposal-processor-plugin/npm-artifacts/src/addresses.json. Setup contract is deployed by the script.",
+  "sppPlugin": {
+    "metadata": "ipfs://Qmd9xb7YacoTN8Hbafo6KYcxYm2JW3CUtkPyL8JHYGq1pQ",
+    "release": 1,
+    "build": 1,
+    "useExisting": true
+  }
+}

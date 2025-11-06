@@ -6,7 +6,13 @@ import "forge-std/Script.sol";
 /// @notice Shared utilities for deployment scripts
 abstract contract DeploymentScriptHelpers is Script {
   /// @notice Controls whether logs are emitted (true when run from CLI, false when run in tests)
-  bool internal verbose = false;
+  bool public verbose = false;
+
+  /// @notice Set verbose flag (allows parent scripts to propagate to child scripts)
+  /// @param _verbose Whether to enable verbose logging
+  function setVerbose(bool _verbose) external {
+    verbose = _verbose;
+  }
 
   /// @notice Conditional logging helpers - only log when verbose is true
   function _log(string memory message) internal view {

@@ -387,7 +387,7 @@ contract VETokenVotingDaoFactory {
   // They are NOT deployed in the current test factory contract.
   // DO NOT call these from scripts until explicitly approved
   // by the developer. Use the temporary helper contract approach
-  // in DeployApproverHatMinterSubDao.s.sol instead.
+  // in DeploySubDao.s.sol instead.
   // ============================================================
 
   function getIVotesAdapter() public view returns (address) {
@@ -420,5 +420,9 @@ contract VETokenVotingDaoFactory {
 
   function getTokenVotingSetup() public view returns (TokenVotingSetupHats) {
     return parameters.tokenVotingSetup;
+  }
+
+  function getDao() public view returns (address) {
+    return address(deployment.dao);
   }
 }

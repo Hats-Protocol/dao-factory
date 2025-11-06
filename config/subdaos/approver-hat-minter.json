@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "network": "sepolia",
   "dao": {
-    "metadataUri": "ipfs://QmXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "metadataUri": "ipfs://QmeKgtZvCBhEWLTZA6XiHF1BNyFqAdUpdsVy8ebMZUSu8U",
     "subdomain": ""
   },
   "mainDaoAddress": "0x126a64d234Fec51eFa80D38dA6F6d6081c4149fd",
@@ -11,7 +11,9 @@
     "adminAddress": "0x624123ec4A9f48Be7AA8a307a74381E4ea7530D4"
   },
   "stage1": {
-    "proposerAddress": "0x2D7473039D40d26789981c907AbE9D37bf463e4E",
+    "mode": "veto",
+    "proposerHatId": 0,
+    "controllerAddress": "0x2D7473039D40d26789981c907AbE9D37bf463e4E",
     "minAdvance": 3600,
     "maxAdvance": 3155760000,
     "voteDuration": 3600
@@ -30,7 +32,7 @@
   },
   "_comment_sppPlugin": "SPP plugin repository address is fetched programmatically from staged-proposal-processor-plugin/npm-artifacts/src/addresses.json. Setup contract is deployed by the script.",
   "sppPlugin": {
-    "metadata": "",
+    "metadata": "ipfs://Qmb2PQ1jVoeNvsPRH6aD1hJPpAixsZZuRBtyAWCQaSp1YZ",
     "release": 1,
     "build": 1,
     "useExisting": true
