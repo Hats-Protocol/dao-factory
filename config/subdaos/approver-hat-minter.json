@@ -5,8 +5,8 @@
     "metadataUri": "ipfs://QmeKgtZvCBhEWLTZA6XiHF1BNyFqAdUpdsVy8ebMZUSu8U",
     "subdomain": ""
   },
-  "mainDaoAddress": "0x126a64d234Fec51eFa80D38dA6F6d6081c4149fd",
-  "mainDaoFactoryAddress": "0x0f905a89238bbcf3071aee9dd85fdcc48ffd4df5",
+  "mainDaoAddress": "0x5b0348810D4576d2B6002214aF0608318748b9A6",
+  "mainDaoFactoryAddress": "0xDC7b6a843Dfa247e74A6713B410471efa4Ef1779",
   "adminPlugin": {
     "adminAddress": "0x624123ec4A9f48Be7AA8a307a74381E4ea7530D4"
   },
